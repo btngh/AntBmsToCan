@@ -128,7 +128,7 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 #define MCP2515_CS 10
 #define MCP2515_SCK 11
 #define MCP2515_MOSI 12 //5
-#define MCP2515_MISO 10
+#define MCP2515_MISO 13
 // Set INT to GPIO4 (Not needed, but coded in anyway)
 #define MCP2515_INT 9
 
