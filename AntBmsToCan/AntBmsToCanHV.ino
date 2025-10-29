@@ -125,7 +125,10 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 // START OF FIXED SETTINGS, SHOULD NOT NEED MODIFYING
 
 // Set CS to GPIO5
-#define MCP2515_CS 10 //5
+#define MCP2515_CS 10
+#define MCP2515_SCK 11
+#define MCP2515_SI 12 //5
+#define MCP2515_SO 10
 // Set INT to GPIO4 (Not needed, but coded in anyway)
 #define MCP2515_INT 7
 
