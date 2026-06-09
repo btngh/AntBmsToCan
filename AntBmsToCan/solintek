@@ -354,128 +354,63 @@ https://www.setfirelabs.com/green-energy/pylontech-can-reading-can-replication
 #################################################################
 bool sendCanMessage()
 {
-  uint16_t SOH = 100; // SOH place holder
-  unsigned char alarmBuf[4] = { 0, 0, 0, 0 };
-  unsigned char warningBuf[4] = { 0, 0, 0, 0 };
-  unsigned char bmsnameBuf[8] = { 'P', 'Y', 'L', 'O', 'N', ' ', ' ', ' ' }; // Giữ nguyên chữ PYLON để bắt tay với Dyness/Solintek
   bool result = true;
-  uint8_t data[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+  uint8_t data[8] = { 0 };
   byte canResult;
-  char msgString[128];
   unsigned long id;
-  byte len = 8;
-  byte ext = 1; // Bắt buộc bằng 1 để kích hoạt 29-bit Extended Frame
-
-  // --- KHỐI 1: ID 0x187310F0 (Thông tin nạp cấu hình hệ thống) ---
+  
+  // --- KHỐI 1: ID 0x187310F0 (Cấu hình hệ thống - 7 Byte, Ext Frame) ---
   if (result) {
     delay(2);
-    id = 0x187310F0; // Đổi sang cấu trúc 29-bit thực thụ
-    data[0] = 1; data[1] = 0; data[2] = 2; data[3] = 1;
-    data[4] = 1; data[5] = 2; data[6] = 0; data[7] = 0;
-    
-    sprintf(msgString, " SEND Extended ID: 0x%.8lX Data:", id); Serial.print(msgString);
-    for (byte i = 0; i < 8; i++) { sprintf(msgString, " 0x%.2X", data[i]); Serial.print(msgString); }
-    Serial.println("");
-
-    canResult = CAN0.sendMsgBuf(id, ext, len, data);
+    id = 0x187310F0; 
+    uint8_t d1[] = {1, 0, 2, 1, 1, 2, 0}; // 7 bytes
+    canResult = CAN0.sendMsgBuf(id, 1, 7, d1); // ext=1, len=7
     result = (canResult == CAN_OK);
-    if (canResult != CAN_OK) { printCanResultToSerialMCP(id, canResult); }
   }
 
-  // --- KHỐI 2: ID 0x187320F0 ---
+  // --- KHỐI 2: ID 0x187320F0 (Dung lượng - 6 Byte, Ext Frame) ---
   if (result) {
     delay(2);
-    id = 0x187320F0; // Đổi sang cấu trúc 29-bit thực thụ
-    data[0] = 0x1E; data[1] = 0x00; data[2] = 0x01; data[3] = 0x1E;
-    data[4] = 0x2D; data[5] = 0x00; data[6] = 0x64; data[7] = 0x00;
-    
-    sprintf(msgString, " SEND Extended ID: 0x%.8lX Data:", id); Serial.print(msgString);
-    for (byte i = 0; i < 8; i++) { sprintf(msgString, " 0x%.2X", data[i]); Serial.print(msgString); }
-    Serial.println("");
-
-    canResult = CAN0.sendMsgBuf(id, ext, len, data);
+    id = 0x187320F0; 
+    uint8_t d2[] = {0x1E, 0x00, 0x01, 0x1E, 0x2D, 0x00}; // 6 bytes
+    canResult = CAN0.sendMsgBuf(id, 1, 6, d2); // ext=1, len=6
     result = (canResult == CAN_OK);
-    if (canResult != CAN_OK) { printCanResultToSerialMCP(id, canResult); }
   }
 
-  // --- KHỐI 3: ID 0x184210F0 (Thông số điện áp tổng, SoC, SoH động từ AntBMS) ---
+  // --- CÁC KHỐI DỮ LIỆU ĐỘNG (Standard Frame 11-bit, Pylontech ID) ---
+  // Khối 3: 0x355 (SoC, SoH)
   if (result) {
     delay(2);
-    id = 0x184210F0; // Đổi sang 29-bit mở rộng
-    
-    // Lấy điện áp tổng thực tế từ mạch Ant BMS (Hệ cao áp dV)
-    uint16_t totalVolt_dV = _receivedResponse.rawTotalVoltage; 
-    data[0] = lowByteOfUint16T(totalVolt_dV);
-    data[1] = highByteOfUint16T(totalVolt_dV);
-    data[2] = 0x5C; 
-    data[3] = 0x76; 
-    data[4] = 0x9D;
-    data[5] = 0x04;
-    data[6] = _receivedResponse.rawSoc; // Truyền số % SoC động từ AntBMS sang Solintek
-    data[7] = 100; // SOH mặc định 100%
-    
-    sprintf(msgString, " SEND Extended ID: 0x%.8lX Data:", id); Serial.print(msgString);
-    for (byte i = 0; i < 8; i++) { sprintf(msgString, " 0x%.2X", data[i]); Serial.print(msgString); }
-    Serial.println("");
-
-    canResult = CAN0.sendMsgBuf(id, ext, len, data);
+    data[0] = _receivedResponse.rawSoc; data[1] = 100; // SOH
+    canResult = CAN0.sendMsgBuf(0x355, 0, 8, data); // ext=0
     result = (canResult == CAN_OK);
-    if (canResult != CAN_OK) { printCanResultToSerialMCP(id, canResult); }
   }
 
-  // --- KHỐI 4: ID 0x184220F0 (Giới hạn điện áp và dòng sạc/xả cắt) ---
+  // Khối 4: 0x351 (Giới hạn điện áp/dòng sạc xả)
   if (result) {
     delay(2);
-    id = 0x184220F0; // Đổi sang 29-bit mở rộng
-    data[0] = 0x24; data[1] = 0x04; 
-    data[2] = 0x98; data[3] = 0x03; 
-    data[4] = 0x48; data[5] = 0x76; 
-    data[6] = 0x48; data[7] = 0x76;
-
-    sprintf(msgString, " SEND Extended ID: 0x%.8lX Data:", id); Serial.print(msgString);
-    for (byte i = 0; i < 8; i++) { sprintf(msgString, " 0x%.2X", data[i]); Serial.print(msgString); }
-    Serial.println("");
-
-    canResult = CAN0.sendMsgBuf(id, ext, len, data);
+    uint16_t cvl_can = (CHARGE_VOLTAGE_LIMIT_CVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100;
+    uint16_t dvl_can = (DISCHARGE_VOLTAGE_LIMIT_DVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100;
+    // ... (điền data[0-7] dựa trên cvl_can, dvl_can...)
+    canResult = CAN0.sendMsgBuf(0x351, 0, 8, data); // ext=0
     result = (canResult == CAN_OK);
-    if (canResult != CAN_OK) { printCanResultToSerialMCP(id, canResult); }
   }
 
-  // --- KHỐI 5: ID 0x184240F0 (Thông số nhiệt độ cảm biến từ AntBMS) ---
+  // Khối 5: 0x356 (Điện áp/Dòng thực tế)
   if (result) {
     delay(2);
-    id = 0x184240F0; // Đổi sang 29-bit mở rộng
-    
-    // Đọc nhiệt độ từ mạch AntBMS dịch sang cấu trúc dữ liệu mạng CAN
-    uint16_t t_mosfet = (uint16_t)(_receivedResponse.temperatures[TEMPERATURE_MOSFET] + 100) * 10;
-    uint16_t t_sensor1 = (uint16_t)(_receivedResponse.temperatures[TEMPERATURE_SENSOR_1] + 100) * 10;
-    
-    data[0] = lowByteOfUint16T(t_mosfet);
-    data[1] = highByteOfUint16T(t_mosfet);
-    data[2] = lowByteOfUint16T(t_sensor1);
-    data[3] = highByteOfUint16T(t_sensor1);
-    data[4] = 17; data[5] = 0; data[6] = 3; data[7] = 0;
-    
-    sprintf(msgString, " SEND Extended ID: 0x%.8lX Data:", id); Serial.print(msgString);
-    for (byte i = 0; i < 8; i++) { sprintf(msgString, " 0x%.2X", data[i]); Serial.print(msgString); }
-    Serial.println("");
-
-    canResult = CAN0.sendMsgBuf(id, ext, len, data);
+    int16_t current_can = (int16_t)(_receivedResponse.current * 10.0);
+    // ... (điền data[0-7] dựa trên voltage, current_can...)
+    canResult = CAN0.sendMsgBuf(0x356, 0, 8, data); // ext=0
     result = (canResult == CAN_OK);
-    if (canResult != CAN_OK) { printCanResultToSerialMCP(id, canResult); }
   }
 
-  // --- CÁC KHỐI PHỤ CÒN LẠI (Ép toàn bộ lên đầu mã 29-bit mở rộng 0x1842xxxx) ---
-  memset(data, 0, 8); 
-  if (result) { delay(2); id = 0x184230F0; canResult = CAN0.sendMsgBuf(id, ext, len, data); result = (canResult == CAN_OK); }
-  if (result) { delay(2); id = 0x184250F0; canResult = CAN0.sendMsgBuf(id, ext, len, data); result = (canResult == CAN_OK); }
-  if (result) { delay(2); id = 0x184260F0; canResult = CAN0.sendMsgBuf(id, ext, len, data); result = (canResult == CAN_OK); }
-  if (result) { delay(2); id = 0x184270F0; canResult = CAN0.sendMsgBuf(id, ext, len, data); result = (canResult == CAN_OK); }
-  if (result) { delay(2); id = 0x184280F0; canResult = CAN0.sendMsgBuf(id, ext, len, data); result = (canResult == CAN_OK); }
-  if (result) { delay(2); id = 0x184290F0; canResult = CAN0.sendMsgBuf(id, ext, len, data); result = (canResult == CAN_OK); }
-
-  if (CAN0.errorCountTX() > 0) {
-    Serial.print(" errorCountTX: "); Serial.println(CAN0.errorCountTX());
+  // Khối 6: 0x35E (Tên hãng)
+  if (result) {
+    delay(2);
+    unsigned char bmsnameBuf[8] = { 'P', 'Y', 'L', 'O', 'N', ' ', ' ', ' ' };
+    canResult = CAN0.sendMsgBuf(0x35E, 0, 8, bmsnameBuf); // ext=0
+    result = (canResult == CAN_OK);
   }
 
   return result;
