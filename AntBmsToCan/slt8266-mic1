@@ -10,11 +10,11 @@
 #define WIFI_SSID "NoDeal"
 #define WIFI_PASSWORD "11681168"
 
-#define MQTT_SERVER "192.168.1.253"
+#define MQTT_SERVER "10.0.0.176"
 #define MQTT_PORT 1883
-#define MQTT_USERNAME "battery" 
-#define MQTT_PASSWORD "Switch1"
-#define DEVICE_NAME "AntBmsToCan"
+#define MQTT_USERNAME "mqqt_solintek" 
+#define MQTT_PASSWORD "155678"
+#define DEVICE_NAME "AntBmsToCan1"
 
 #define BMS_QUERY_INTERVAL 1000
 #define MQTT_SEND_INTERVAL 10000 // Chu kỳ gửi dữ liệu lên MQTT (10 giây)
