@@ -7,8 +7,8 @@
 // ==========================================
 // CẤU HÌNH WIFI VÀ MQTT BROKER
 // ==========================================
-#define WIFI_SSID "NoDeal"
-#define WIFI_PASSWORD "11681168"
+#define WIFI_SSID "ASUS_90_2G"
+#define WIFI_PASSWORD "116811681168"
 
 #define MQTT_SERVER "10.0.0.176"
 #define MQTT_PORT 1883
