@@ -20,7 +20,6 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 #include <SPI.h>
 #include <mcp_can.h>
 ##include <HardwareSerial.h>
-#include <serial_io.h>
 // START OF BASIC SETTINGS
 
 // If you want to use WiFi to report information temporarily to an MQTT broker, uncomment the following line
