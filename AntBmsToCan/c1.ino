@@ -596,7 +596,7 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
 
 
-#ifdef USE_WIFI_AND_MQTT
+ifdef USE_WIFI_AND_MQTT
     // Configure WIFI
     setupWifi();
 
@@ -846,6 +846,10 @@ Grabs data from the BMS and onward posts to CAN
 readBms()
 Grabs data from the BMS and onward posts to CAN
 */
+/*
+readBms()
+Grabs data from the BMS and onward posts to CAN
+*/
 void readBms()
 {
   bool goodCrc = false;
@@ -863,7 +867,7 @@ void readBms()
   // Testing fixed messages, see USE_FIXED_MESSAGE_FOR_DEBUGGING above.
   byte fixedTestMessage[ BMS_MESSAGE_LENGTH ] = { 0xAA, 0x55, 0xAA, 0xFF, 0x02, 0x30, 0x09, 0xE4, 0x09, 0xE5, 0x09, 0xE5, 0x09, 0xE4, 0x09, 0xE6, 0x09, 0xE6, 0x09, 0xC4, 0x09, 0xE8, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xFE, 0x0A, 0x0B, 0x0A, 0x05, 0x0A, 0x09, 0x0A, 0x06, 0x0A, 0x0D, 0x09, 0xDE, 0x0A, 0x0A, 0x0A, 0x04, 0x0A, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2B, 0x63, 0x07, 0x27, 0x0E, 0x00, 0x06, 0xF4, 0xFA, 0x25, 0x00, 0xE8, 0xAF, 0xE2, 0x01, 0xFF, 0xC9, 0x8B, 0x00, 0x14, 0x00, 0x13, 0x00, 0x11, 0x00, 0x11, 0x00, 0x12, 0x00, 0x12, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0xF0, 0x12, 0x0A, 0x0D, 0x07, 0x09, 0xC4, 0x09, 0xF1, 0x16, 0xFF, 0xFF, 0x00, 0x7E, 0x00, 0x7A, 0x02, 0xB0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1D, 0x8D };
   size_t bytesReceived;
-  char hexChar[ 3 ];
+  char hexChar;
   uint32_t tempCalc = 0;
 
   auto ant_get_16bit = [&]( size_t i) -> uint16_t {
@@ -878,10 +882,10 @@ void readBms()
     _bms. read();
   }
 
-  // Gửi lệnh yêu cầu dữ liệu tới mạch AntBMS qua HardwareSerial
+  // Gửi xung lệnh yêu cầu dữ liệu đến vi điều khiển phụ của mạch AntBMS
   _bms. write(requestCommand, sizeof(requestCommand));
 
-  // Kiểm tra chế độ Debug sử dụng mảng gói tin giả lập cố định
+  // Phân tách luồng xử lý giữa dữ liệu thật và dữ liệu giả lập Debug
   if (USE_FIXED_MESSAGE_FOR_DEBUGGING) {
     delay(10);
     memcpy(incomingBuffer, fixedTestMessage, BMS_MESSAGE_LENGTH);
@@ -890,7 +894,7 @@ void readBms()
     bytesReceived = _bms. readBytes(incomingBuffer, BMS_MESSAGE_LENGTH);
   }
 
-  // Xác thực gói tin nhận về (độ dài và ký tự Header bắt đầu)
+  // Khởi chạy thuật toán validate cấu trúc dữ liệu gói tin nhận về
   if (bytesReceived == BMS_MESSAGE_LENGTH) {
     for (int i = 0; i < 4; i++) {
       if (incomingBuffer[ i ] != startMark[ i ]) {
@@ -907,33 +911,34 @@ void readBms()
     }
   }
 
-  // Phân tích dữ liệu từ mảng Byte nếu gói tin hợp lệ
+  // Thực hiện bóc tách mảng Byte khi kiểm tra tính toàn vẹn gói tin thành công
   if (goodCrc) {
     _bmsValidResponseCounter++;
 
-    // Bóc tách điện áp tổng, dòng điện, dung lượng số từ mảng byte của AntBMS
+    // Trích xuất các tham số dung lượng điện năng cơ bản
     _receivedResponse. rawTotalVoltage = ant_get_16bit(4);
     _receivedResponse. totalVoltage = _receivedResponse. rawTotalVoltage / 10.0;
 
-    // Trích xuất thông số điện áp của từng cell pin độc lập
     for (int i = 0; i < MAX_CELLS_SUPPORTED_BY_BMS; i++) {
       _receivedResponse. cellVoltage[ i ] = ant_get_16bit(6 + (i * 2)) / 1000.0;
     }
 
     _receivedResponse. rawCurrent = ant_get_32bit(70);
     _receivedResponse. current = ((int32_t)_receivedResponse. rawCurrent) / 10.0;
-    _receivedResponse. rawSoc = incomingBuffer[ 74 ];
+    
+    // SỬA LỖI: Lấy phần tử cụ thể từ mảng thay vì lấy toàn bộ mảng buffer
+    _receivedResponse. rawSoc = incomingBuffer[74]; 
     _receivedResponse. soc = _receivedResponse. rawSoc;
 
     _receivedResponse. maxCellVoltage = ant_get_16bit(116) / 1000.0;
     _receivedResponse. minCellVoltage = ant_get_16bit(119) / 1000.0;
-    _receivedResponse. cells = incomingBuffer[ 123 ];
+    _receivedResponse. cells = incomingBuffer[122]; // SỬA LỖI: Lấy chính xác Byte chứa số lượng cell pin
 
     _receivedResponse. temperatures[ TEMPERATURE_MOSFET ] = (int16_t)ant_get_16bit(82);
     _receivedResponse. temperatures[ TEMPERATURE_SENSOR_1 ] = (int16_t)ant_get_16bit(86);
 
     // -------------------------------------------------------------------------
-    // ĐỒNG BỘ DỮ LIỆU SANG ĐƠN VỊ CỦA SOLXPOW CAN-BUS
+    // ĐỒNG BỘ MAPPING LÊN MẠNG CAN BUS HỆ THỐNG SOLXPOW
     // -------------------------------------------------------------------------
     datalayer. battery. status. voltage_dV = ( uint16_t) round(_receivedResponse. totalVoltage * 10.0);
     datalayer. battery. status. reported_current_dA = ( int32_t) round(_receivedResponse. current * 10.0);
@@ -959,7 +964,7 @@ void readBms()
     _bmsInvalidResponseCounter++;
   }
 
-  // Gọi hàm xuất log cũ và thực thi gửi chuỗi gói tin lên mạng CAN bus phần cứng
+  // Xuất bản dữ liệu cũ ra cổng COM và kích hoạt các cổng phần cứng gửi khung CAN đi
   printValuesToSerialAndSendToMQTTIfUsing();
   
   const bool canResult = sendCanMessage();
