@@ -853,68 +853,109 @@ readBms()
 
 Grabs data from the BMS and onward posts to CAN
 */
+/*
+readBms()
+Grabs data from the BMS and onward posts to CAN
+*/
 void readBms()
 {
-    bool goodCrc = false;
-    bool goodHeader = true;
+  bool goodCrc = false;
+  bool goodHeader = true;
 
-    // AntBms Request Data Command
-    const byte requestCommand[] = { 0x5A, 0x5A, 0x00, 0x00, 0x01, 0x01 };
+  // AntBms Request Data Command
+  const byte requestCommand[] = { 0x5A, 0x5A, 0x00, 0x00, 0x01, 0x01 };
+  
+  // Received Messages begin with this
+  const byte startMark[] = { 0xAA, 0x55, 0xAA, 0xFF };
+  
+  // Buffer for incoming data
+  byte incomingBuffer[ BMS_MESSAGE_LENGTH] = { 0 };
+  
+  // Testing fixed messages, see USE_FIXED_MESSAGE_FOR_DEBUGGING above.
+  byte fixedTestMessage[ BMS_MESSAGE_LENGTH] = { 0xAA, 0x55, 0xAA, 0xFF, 0x02, 0x30, 0x09, 0xE4, 0x09, 0xE5, 0x09, 0xE5, 0x09, 0xE4, 0x09, 0xE6, 0x09, 0xE6, 0x09, 0xC4, 0x09, 0xE8, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xFE, 0x0A, 0x0B, 0x0A, 0x05, 0x0A, 0x09, 0x0A, 0x06, 0x0A, 0x0D, 0x09, 0xDE, 0x0A, 0x0A, 0x0A, 0x04, 0x0A, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2B, 0x63, 0x07, 0x27, 0x0E, 0x00, 0x06, 0xF4, 0xFA, 0x25, 0x00, 0xE8, 0xAF, 0xE2, 0x01, 0xFF, 0xC9, 0x8B, 0x00, 0x14, 0x00, 0x13, 0x00, 0x11, 0x00, 0x11, 0x00, 0x12, 0x00, 0x12, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0xF0, 0x12, 0x0A, 0x0D, 0x07, 0x09, 0xC4, 0x09, 0xF1, 0x16, 0xFF, 0xFF, 0x00, 0x7E, 0x00, 0x7A, 0x02, 0xB0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1D, 0x8D};
+  
+  size_t bytesReceived;
+  char hexChar[ 3];
+  uint32_t tempCalc = 0;
+  
+  auto ant_get_16bit = [&]( size_t i) -> uint16_t {
+    return ( uint16_t(incomingBuffer[i + 0]) << 8) | ( uint16_t(incomingBuffer[i + 1]) << 0);
+  };
+  
+  auto ant_get_32bit = [&]( size_t i) -> uint32_t {
+    return ( uint32_t( ant_get_16bit(i + 0)) << 16) | ( uint32_t( ant_get_16bit(i + 2)) << 0);
+  };
+  
+  _bms. flush();
+  while (_bms. available())
+  {
+    _bms. read();
+  }
 
-    // Received Messages begin with this
-    const byte startMark[] = { 0xAA, 0x55, 0xAA, 0xFF };
+  // [Đoạn mã xử lý đọc Serial/Phân tích gói tin từ AntBMS sẽ chạy ở đây]
+  // Giả định sau khi chạy xong, dữ liệu đã nạp đầy vào struct `_receivedResponse`...
 
-    // Buffer for incoming data
-    byte incomingBuffer[BMS_MESSAGE_LENGTH] = { 0 };
+  // -------------------------------------------------------------------------
+  // BƯỚC MAPPING: Chuyển đổi dữ liệu từ _receivedResponse sang datalayer (SOLXPOW)
+  // Quy đổi đơn vị chính xác theo mong đợi của các hàm build_frame_*
+  // -------------------------------------------------------------------------
+  
+  // Điện áp tổng (V -> dV, nhân 10) và dòng điện (A -> dA, nhân 10)
+  datalayer.battery.status.voltage_dV = (uint16_t)round(_receivedResponse.totalVoltage * 10.0);
+  datalayer.battery.status.reported_current_dA = (int32_t)round(_receivedResponse.current * 10.0);
+  
+  // SoC yêu cầu dạng phần trăm từ 0-100 (Hàm build_frame_4210 chia cho 100.0f nên ta nhân với 100.0)
+  datalayer.battery.status.reported_soc = (uint32_t)round(_receivedResponse.soc * 100.0);
+  datalayer.battery.status.soh_pptt = 10000; // Mặc định SOH 100% (100 * 100) nếu BMS không trả về
 
-    // Testing fixed messages, see USE_FIXED_MESSAGE_FOR_DEBUGGING above.
-    byte fixedTestMessage[BMS_MESSAGE_LENGTH] = {0xAA, 0x55, 0xAA, 0xFF, 0x02, 0x30, 0x09, 0xE4, 0x09, 0xE5, 0x09, 0xE5, 0x09, 0xE4, 0x09, 0xE6, 0x09, 0xE6, 0x09, 0xC4, 0x09, 0xE8, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xFE, 0x0A, 0x0B, 0x0A, 0x05, 0x0A, 0x09, 0x0A, 0x06, 0x0A, 0x0D, 0x09, 0xDE, 0x0A, 0x0A, 0x0A, 0x04, 0x0A, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2B, 0x63, 0x07, 0x27, 0x0E, 0x00, 0x06, 0xF4, 0xFA, 0x25, 0x00, 0xE8, 0xAF, 0xE2, 0x01, 0xFF, 0xC9, 0x8B, 0x00, 0x14, 0x00, 0x13, 0x00, 0x11, 0x00, 0x11, 0x00, 0x12, 0x00, 0x12, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0xF0, 0x12, 0x0A, 0x0D, 0x07, 0x09, 0xC4, 0x09, 0xF1, 0x16, 0xFF, 0xFF, 0x00, 0x7E, 0x00, 0x7A, 0x02, 0xB0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1D, 0x8D};
+  // Điện áp cell lớn nhất và nhỏ nhất (V -> mV, nhân 1000)
+  datalayer.battery.status.cell_max_voltage_mV = (uint16_t)round(_receivedResponse.maxCellVoltage * 1000.0);
+  datalayer.battery.status.cell_min_voltage_mV = (uint16_t)round(_receivedResponse.minCellVoltage * 1000.0);
 
-    size_t bytesReceived;
+  // Nhiệt độ lớn nhất và nhỏ nhất (C -> dC, nhân 10)
+  // Lưu ý: build_frame_4210 cộng thêm 1000 trước khi ép kiểu, nên giữ nguyên đơn vị dC ở đây
+  datalayer.battery.status.temperature_max_dC = (int16_t)round(_receivedResponse.temperatures[TEMPERATURE_MOSFET] * 10.0);
+  datalayer.battery.status.temperature_min_dC = (int16_t)round(_receivedResponse.temperatures[TEMPERATURE_SENSOR_1] * 10.0);
 
-    // For printing the input to the serial monitor
-    char hexChar[3];
+  // Cấu hình các biến giới hạn sạc/xả dòng điện dựa trên cài đặt nâng cao
+  datalayer.battery.status.max_charge_current_dA = CHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
+  datalayer.battery.status.max_discharge_current_dA = DISCHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
 
-    // For temporary calculations
-    uint32_t tempCalc = 0;
+  // Trạng thái hệ thống (NORMAL / FAULT)
+  if (_receivedResponse.rawSoc == 0) {
+    datalayer.system.status.system_status = FAULT;
+  } else {
+    datalayer.system.status.system_status = NORMAL; // Cần đảm bảo enum NORMAL có tồn tại trong code
+  }
 
+  // -------------------------------------------------------------------------
+  // BƯỚC IN LOG DEBUG TRỰC TIẾP RA SERIAL MONITOR
+  // -------------------------------------------------------------------------
+  Serial.printf("DBG: totalVoltage=%f, current=%f, soc=%f, maxCell=%f, minCell=%f\n", 
+                _receivedResponse.totalVoltage, 
+                _receivedResponse.current, 
+                _receivedResponse.soc, 
+                _receivedResponse.maxCellVoltage, 
+                _receivedResponse.minCellVoltage);
 
-    auto ant_get_16bit = [&](size_t i) -> uint16_t {
-        return (uint16_t(incomingBuffer[i + 0]) << 8) | (uint16_t(incomingBuffer[i + 1]) << 0);
-    };
-    auto ant_get_32bit = [&](size_t i) -> uint32_t {
-        return (uint32_t(ant_get_16bit(i + 0)) << 16) | (uint32_t(ant_get_16bit(i + 2)) << 0);
-    };
-
- 
-    // Clear out outbound and inbound buffers
-    _bms.flush();
-    while (_bms.available())
-    {
-        _bms.read();
-    }
-
-    // ... (rest of readBms parsing logic remains as in original file)
-    // After parsing and populating _receivedResponse, print and send:
-    printValuesToSerialAndSendToMQTTIfUsing();
-
-    const bool canResult = sendCanMessage();
-
-    if (canResult)
-    {
-        _canSuccessCounter++;
-    }
-    else
-    {
-        _canFailureCounter++;
-    }
-
-    // Invert LED
-    digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN) == LOW ? HIGH : LOW);
-
-    return;
+  // Tiến hành in thông tin định dạng cũ và đẩy dữ liệu lên CAN bus
+  printValuesToSerialAndSendToMQTTIfUsing();
+  
+  const bool canResult = sendCanMessage();
+  if (canResult)
+  {
+    _canSuccessCounter++;
+  }
+  else
+  {
+    _canFailureCounter++;
+  }
+  
+  // Đảo trạng thái đèn LED báo hiệu chu kỳ hoạt động thành công
+  digitalWrite( LED_BUILTIN, digitalRead( LED_BUILTIN) == LOW ? HIGH : LOW);
+  return;
 }
-
+///////////////
 /*
 printValuesToSerialAndSendToMQTTIfUsing()
 
