@@ -17,32 +17,36 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 
 */
 
-#include <SPI.h>
-#include <mcp_can.h>
-#include <HardwareSerial.h>
-#include <serial_io.h>
+#define <SPI.h>
+#define <mcp_can.h>
+#define <HardwareSerial.h>
+#define <serial_io.h>
 // START OF BASIC SETTINGS
 
 // If you want to use WiFi to report information temporarily to an MQTT broker, uncomment the following line
 // DO NOT USE OUTSIDE OF TESTING - YOU DON'T WANT YOUR INVERTER GOING INTO ERROR JUST BECAUSE WIFI OR MQTT WAS UNAVAILABLE!
-//#define USE_WIFI_AND_MQTT
+// START OF BASIC SETTINGS
+
+// Đã mở khóa tính năng WiFi và MQTT thành công
+#define USE_WIFI_AND_MQTT
 
 #ifdef USE_WIFI_AND_MQTT
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-// Update with your WiFi Access Point details
-#define WIFI_SSID       "ASUS_90_2G"
-#define WIFI_PASSWORD   "116811681168"
+// Cấu hình thông số mạng của bạn
+#define WIFI_SSID "ASUS_90_2G"
+#define WIFI_PASSWORD "116811681168"
 
-// Update with your MQTT Broker details
+// Thông số kết nối máy chủ MQTT Broker
 #define MQTT_SERVER "192.168.1.176"
-#define MQTT_PORT   1883
-d#efine MQTT_USERNAME   "battery"           // Empty string for none.
-#define MQTT_PASSWORD   "Switch1"
+#define MQTT_PORT 1883
+#define MQTT_USERNAME "battery" 
+#define MQTT_PASSWORD "Switch1"
 
-// The device name is used as the MQTT base topic and presence on the network.
-// If you need more than one AntBmsToCan on your network, give them unique names.
+#define DEVICE_NAME "AntBmsToCan"
+#endif
+
 #define DEVICE_NAME "AntBmsToCan"
 endif
 
