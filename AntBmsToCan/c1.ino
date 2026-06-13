@@ -27,24 +27,24 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 // DO NOT USE OUTSIDE OF TESTING - YOU DON'T WANT YOUR INVERTER GOING INTO ERROR JUST BECAUSE WIFI OR MQTT WAS UNAVAILABLE!
 //#define USE_WIFI_AND_MQTT
 
-#ifdef USE_WIFI_AND_MQTT
-#include <WiFi.h>
-#include <PubSubClient.h>
+ifdef USE_WIFI_AND_MQTT
+include <WiFi.h>
+include <PubSubClient.h>
 
 // Update with your WiFi Access Point details
-#define WIFI_SSID       "NoDeal"
-#define WIFI_PASSWORD   "11681168"
+define WIFI_SSID       "ASUS_90_2G"
+define WIFI_PASSWORD   "116811681168"
 
 // Update with your MQTT Broker details
-#define MQTT_SERVER "192.168.1.253"
-#define MQTT_PORT   1883
-#define MQTT_USERNAME   "battery"           // Empty string for none.
-#define MQTT_PASSWORD   "Switch1"
+define MQTT_SERVER "192.168.1.176"
+define MQTT_PORT   1883
+define MQTT_USERNAME   "battery"           // Empty string for none.
+define MQTT_PASSWORD   "Switch1"
 
 // The device name is used as the MQTT base topic and presence on the network.
 // If you need more than one AntBmsToCan on your network, give them unique names.
-#define DEVICE_NAME "AntBmsToCan"
-#endif
+define DEVICE_NAME "AntBmsToCan"
+endif
 
 // "Charge Voltage Limit (CVL)"
 // This is the millivolts representing max charge of an individual cell.
@@ -77,10 +77,6 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 
 // END OF BASIC SETTINGS
 
-
-
-
-
 // START OF ADVANCED SETTINGS
 
 // How long to wait before we give up waiting for a BMS response
@@ -88,7 +84,7 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 #define BMS_TIMEOUT 250
 
 // For debugging, uses a fixed message customisable in readBms()
-#define USE_FIXED_MESSAGE_FOR_DEBUGGING false
+define USE_FIXED_MESSAGE_FOR_DEBUGGING true
 
 // If no BMS response, or a garbage BMS response which failed validation, print results and send MQTT anyway?
 // Usually you won't want this.  It is good for debugging if for some reason values are not coming through.
@@ -104,17 +100,17 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 //#define SHORTING_PIN 35 //13
 
 
-#ifdef USING_WIFI_AND_MQTT
+ifdef USING_WIFI_AND_MQTT
 // On boot will request a buffer size of (MAX_MQTT_PAYLOAD_SIZE + MQTT_HEADER_SIZE) for MQTT, and
 // MAX_MQTT_PAYLOAD_SIZE for building payloads.  If these fail and your device doesn't boot, you can assume you've set this too high.
-#define MAX_MQTT_PAYLOAD_SIZE 4096
-#define MIN_MQTT_PAYLOAD_SIZE 512
-#define MQTT_HEADER_SIZE 512
+define MAX_MQTT_PAYLOAD_SIZE 4096
+define MIN_MQTT_PAYLOAD_SIZE 512
+define MQTT_HEADER_SIZE 512
 
 // How frequently to send a response over MQTT
 // Default 10 seconds
-#define MQTT_SEND_INTERVAL 10000
-#endif
+define MQTT_SEND_INTERVAL 10000
+endif
 // END OF ADVANCED SETTINGS
 
 
@@ -172,28 +168,13 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 #define BMS_MESSAGE_LENGTH 140
 
 // END OF FIXED SETTINGS
-
-
-
-
-
-
-
-
-
 // CODE ONWARDS
-
-
-
 HardwareSerial _bms(2); // UART 2 (GPIO19 RX2, GPIO20 TX2)
-
 // Totals for racking up
 unsigned long _bmsValidResponseCounter = 0;
 unsigned long _bmsInvalidResponseCounter = 0;
 unsigned long _canSuccessCounter = 0;
 unsigned long _canFailureCounter = 0;
-
-
 
 #ifdef USE_WIFI_AND_MQTT
 // Main WiFi object
