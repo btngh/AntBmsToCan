@@ -104,7 +104,7 @@ define USE_FIXED_MESSAGE_FOR_DEBUGGING true
 //#define SHORTING_PIN 35 //13
 
 
-ifdef USE_WIFI_AND_MQTT
+#ifdef USE_WIFI_AND_MQTT
 // On boot will request a buffer size of (MAX_MQTT_PAYLOAD_SIZE + MQTT_HEADER_SIZE) for MQTT, and
 // MAX_MQTT_PAYLOAD_SIZE for building payloads.  If these fail and your device doesn't boot, you can assume you've set this too high.
 #define MAX_MQTT_PAYLOAD_SIZE 4096
@@ -600,7 +600,7 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
 
 
-ifdef USE_WIFI_AND_MQTT
+#ifdef USE_WIFI_AND_MQTT
     // Configure WIFI
     setupWifi();
 
