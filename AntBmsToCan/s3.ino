@@ -366,8 +366,9 @@ void readBms() {
 // ======================== SETUP & LOOP FUNCTIONS ========================
 void setup() {
   Serial.begin(ESP_DEBUGGING_BAUD_RATE);
+  delay(1000); 
+  Serial.println("\n--- HỆ THỐNG KHỞI ĐỘNG (GIỮ CHÂN CŨ) ---");
   
-  // KHỞI CHẠY UART1 TRÊN CÁC CHÂN AN TOÀN CỦA CHIP S3 (RX=16, TX=15)
   _bms.begin(BMS_BAUD_RATE, SERIAL_8N1, BMS_RX_PIN, BMS_TX_PIN);
   _bms.setTimeout(BMS_TIMEOUT);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -384,32 +385,30 @@ void setup() {
   mqttReconnect();
 #endif
 
-  // CẤU HÌNH THỜI GIAN KHỞI ĐỘNG SPI MẶC ĐỊNH CHO ESP32-S3
-  SPI.begin(12, 13, 11, 10); // SCK=12, MISO=13, MOSI=11, SS=10
+  // GIỮ NGUYÊN CỤM CHÂN CŨ CỦA BẠN (12, 13, 11, 10)
+  SPI.begin(12, 13, 11, 10); 
   
+  // SỬA: Ép hạ tốc độ xung SPI xuống 1MHz để mạch đệm YF08F chạy kịp, không bị méo sóng
+  SPI.setClockDivider(SPI_CLOCK_DIV8); 
+  
+  Serial.println("Dang quet thiet bi CAN MCP2515...");
   byte errorCode = CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ);
-  while (errorCode != CAN_OK) {
-    Serial.printf("CAN Configuration Error: 0x%X\n", errorCode);
-    delay(500);
+  
+  // SỬA: Giới hạn thử lại 5 lần, nếu lỗi vẫn cho chạy tiếp để tránh treo cứng Serial
+  int retryCount = 0;
+  while (errorCode != CAN_OK && retryCount < 5) {
+    Serial.printf(" CAN Lỗi cấu hình: 0x%X. Thử lại...\n", errorCode);
+    delay(300);
     errorCode = CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ);
+    retryCount++;
   }
-  CAN0.enOneShotTX();
-  CAN0.setMode(MCP_NORMAL);
-  pinMode(MCP2515_INT, INPUT_PULLUP);
-  Serial.println("MCP2515 Initialized Successfully!");
-}
-
-void loop() {
-  static unsigned long lastBmsQuery = 0;
-#ifdef USE_WIFI_AND_MQTT
-  if (WiFi.status() != WL_CONNECTED) setupWifi();
-  if (!_mqtt.connected() || !_mqtt.loop()) mqttReconnect();
-#endif
-
-  if (millis() - lastBmsQuery >= BMS_QUERY_INTERVAL) {
-    lastBmsQuery = millis();
-    readBms();
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  
+  if (errorCode == CAN_OK) {
+    CAN0.enOneShotTX();
+    CAN0.setMode(MCP_NORMAL);
+    pinMode(MCP2515_INT, INPUT_PULLUP);
+    Serial.println(" [OK] MCP2515 Khởi tạo thành công!");
+  } else {
+    Serial.println(" [CẢNH BÁO] Không kết nối được MCP2515. Hãy kiểm tra chân OE mạch đệm!");
   }
-  delay(10);
 }
