@@ -27,23 +27,23 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 // DO NOT USE OUTSIDE OF TESTING - YOU DON'T WANT YOUR INVERTER GOING INTO ERROR JUST BECAUSE WIFI OR MQTT WAS UNAVAILABLE!
 //#define USE_WIFI_AND_MQTT
 
-ifdef USE_WIFI_AND_MQTT
-include <WiFi.h>
-include <PubSubClient.h>
+#ifdef USE_WIFI_AND_MQTT
+#include <WiFi.h>
+#include <PubSubClient.h>
 
 // Update with your WiFi Access Point details
-define WIFI_SSID       "ASUS_90_2G"
-define WIFI_PASSWORD   "116811681168"
+#define WIFI_SSID       "ASUS_90_2G"
+#define WIFI_PASSWORD   "116811681168"
 
 // Update with your MQTT Broker details
-define MQTT_SERVER "192.168.1.176"
-define MQTT_PORT   1883
-define MQTT_USERNAME   "battery"           // Empty string for none.
-define MQTT_PASSWORD   "Switch1"
+#define MQTT_SERVER "192.168.1.176"
+#define MQTT_PORT   1883
+d#efine MQTT_USERNAME   "battery"           // Empty string for none.
+#define MQTT_PASSWORD   "Switch1"
 
 // The device name is used as the MQTT base topic and presence on the network.
 // If you need more than one AntBmsToCan on your network, give them unique names.
-define DEVICE_NAME "AntBmsToCan"
+#define DEVICE_NAME "AntBmsToCan"
 endif
 
 // "Charge Voltage Limit (CVL)"
@@ -103,13 +103,13 @@ define USE_FIXED_MESSAGE_FOR_DEBUGGING true
 ifdef USING_WIFI_AND_MQTT
 // On boot will request a buffer size of (MAX_MQTT_PAYLOAD_SIZE + MQTT_HEADER_SIZE) for MQTT, and
 // MAX_MQTT_PAYLOAD_SIZE for building payloads.  If these fail and your device doesn't boot, you can assume you've set this too high.
-define MAX_MQTT_PAYLOAD_SIZE 4096
-define MIN_MQTT_PAYLOAD_SIZE 512
-define MQTT_HEADER_SIZE 512
+#define MAX_MQTT_PAYLOAD_SIZE 4096
+#define MIN_MQTT_PAYLOAD_SIZE 512
+#define MQTT_HEADER_SIZE 512
 
 // How frequently to send a response over MQTT
 // Default 10 seconds
-define MQTT_SEND_INTERVAL 10000
+#define MQTT_SEND_INTERVAL 10000
 endif
 // END OF ADVANCED SETTINGS
 
