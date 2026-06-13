@@ -19,7 +19,8 @@ SetFireLabs - https://www.setfirelabs.com/green-energy/pylontech-can-reading-can
 
 #include <SPI.h>
 #include <mcp_can.h>
-##include <HardwareSerial.h>
+#include <HardwareSerial.h>
+
 // START OF BASIC SETTINGS
 
 // If you want to use WiFi to report information temporarily to an MQTT broker, uncomment the following line
@@ -103,7 +104,7 @@ define USE_FIXED_MESSAGE_FOR_DEBUGGING true
 //#define SHORTING_PIN 35 //13
 
 
-#ifdef USE_WIFI_AND_MQTT
+
 // On boot will request a buffer size of (MAX_MQTT_PAYLOAD_SIZE + MQTT_HEADER_SIZE) for MQTT, and
 // MAX_MQTT_PAYLOAD_SIZE for building payloads.  If these fail and your device doesn't boot, you can assume you've set this too high.
 #define MAX_MQTT_PAYLOAD_SIZE 4096
@@ -1103,7 +1104,7 @@ void printValuesToSerialAndSendToMQTTIfUsing()
 
 }
 
-#ifdef USE_WIFI_AND_MQTT
+
 /*
 setupWifi
 
@@ -1302,5 +1303,3 @@ void sendMqttState(int state, size_t bytesReceived, unsigned long id, byte canRe
     // Send the error on its way
     sendMqtt(topicResponse);
 }
-
-
