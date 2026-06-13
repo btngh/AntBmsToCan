@@ -939,8 +939,42 @@ void readBms()
                 _receivedResponse.minCellVoltage);
 
   // Tiến hành in thông tin định dạng cũ và đẩy dữ liệu lên CAN bus
-  printValuesToSerialAndSendToMQTTIfUsing();
+  // -------------------------------------------------------------------------
+  // ĐỒNG BỘ DỮ LIỆU: Từ _receivedResponse sang datalayer để cấp cho mạch CAN
+  // -------------------------------------------------------------------------
+  // 1. Điện áp tổng (V -> dV, nhân 10) và Dòng điện (A -> dA, nhân 10)
+  datalayer.battery.status.voltage_dV = (uint16_t)round(_receivedResponse.totalVoltage * 10.0);
+  datalayer.battery.status.reported_current_dA = (int32_t)round(_receivedResponse.current * 10.0);
   
+  // 2. SoC (Dạng phần trăm từ 0-100, nhân 100 vì hàm build_frame_4210 sẽ chia lại cho 100.0f)
+  datalayer.battery.status.reported_soc = (uint32_t)round(_receivedResponse.soc * 100.0);
+  datalayer.battery.status.soh_pptt = 10000; // Mặc định SOH 100%
+
+  // 3. Điện áp cell lớn nhất và nhỏ nhất (V -> mV, nhân 1000)
+  datalayer.battery.status.cell_max_voltage_mV = (uint16_t)round(_receivedResponse.maxCellVoltage * 1000.0);
+  datalayer.battery.status.cell_min_voltage_mV = (uint16_t)round(_receivedResponse.minCellVoltage * 1000.0);
+
+  // 4. Nhiệt độ lớn nhất và nhỏ nhất (C -> dC, nhân 10)
+  datalayer.battery.status.temperature_max_dC = (int16_t)round(_receivedResponse.temperatures[TEMPERATURE_MOSFET] * 10.0);
+  datalayer.battery.status.temperature_min_dC = (int16_t)round(_receivedResponse.temperatures[TEMPERATURE_SENSOR_1] * 10.0);
+
+  // 5. Cấu hình giới hạn dòng sạc/xả lấy từ cài đặt cấu hình đầu file
+  datalayer.battery.status.max_charge_current_dA = CHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
+  datalayer.battery.status.max_discharge_current_dA = DISCHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
+
+  // 6. Tính toán điện áp chặn sạc/xả cho khung 4220 (miliVolt -> deciVolt, chia 100)
+  // Khai báo rõ kiểu dữ liệu uint16_t để tránh lỗi "not declared" nếu đầu file chưa tạo biến
+  charge_cutoff_voltage_dV = (uint16_t)((CHARGE_VOLTAGE_LIMIT_CVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100);
+  discharge_cutoff_voltage_dV = (uint16_t)((DISCHARGE_VOLTAGE_LIMIT_DVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100);
+
+  // 7. Log nhanh ra Serial để kiểm tra dữ liệu trước khi đóng gói gửi đi
+  Serial.printf("\n[DEBUG] totalVoltage=%f, current=%f, soc=%f, maxCell=%f, minCell=%f\n", 
+                _receivedResponse.totalVoltage, _receivedResponse.current, _receivedResponse.soc, 
+                _receivedResponse.maxCellVoltage, _receivedResponse.minCellVoltage);
+  // -------------------------------------------------------------------------
+
+  // Tiến hành in giá trị định dạng cũ và đẩy dữ liệu lên CAN bus
+  printValuesToSerialAndSendToMQTTIfUsing();
   const bool canResult = sendCanMessage();
   if (canResult)
   {
@@ -950,6 +984,7 @@ void readBms()
   {
     _canFailureCounter++;
   }
+
   
   // Đảo trạng thái đèn LED báo hiệu chu kỳ hoạt động thành công
   digitalWrite( LED_BUILTIN, digitalRead( LED_BUILTIN) == LOW ? HIGH : LOW);
