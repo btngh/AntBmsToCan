@@ -3,6 +3,50 @@ Name: AntBmsToCan.ino
 Author: Daniel Young (Vá lỗi đồng bộ CAN & cấu hình WiFi/MQTT)
 Released under GNU GENERAL PUBLIC LICENSE.
 */
+/*
+
+
+===================================================================================
+             HƯỚNG DẪN ĐẤU NỐI PHẦN CỨNG CHO CHIP CHÍNH: ESP32-S3
+===================================================================================
+
+1. KẾT NỐI ESP32-S3 VỚI MODULE CAN BUS MCP2515 (Giao tiếp FSPI hệ S3)
+   - Cấp nguồn 5V từ chân 5V / VBUS của ESP32-S3 sang chân VCC của MCP2515.
+   - Thạch anh trên module MCP2515 bắt buộc phải là loại 8MHz.
+   --------------------------------------------------------------------------
+
+   |  Chân Module MCP2515  |  Chân Bo Mạch ESP32-S3 |         Ghi chú          |
+   --------------------------------------------------------------------------
+
+   |         VCC           |        5V / VBUS       | Nguồn nuôi chip CAN    |
+   |         GND           |          GND           | Nối đất chung          |
+   |         CS            |        GPIO 10         | Chân chọn Chip (SS)    |
+   |      SO (MISO)        |        GPIO 13         | Nhận dữ liệu SPI       |
+   |      SI (MOSI)        |        GPIO 11         | Truyền dữ liệu SPI     |
+   |         SCK           |        GPIO 12         | Xung giữ nhịp SPI      |
+   |         INT           |        GPIO 14         | Chân ngắt tín hiệu     |
+   --------------------------------------------------------------------------
+
+2. KẾT NỐI ESP32-S3 VỚI MẠCH ANTBMS (Giao tiếp Serial / UART1)
+   - Đấu chéo dây tín hiệu (TX bms vào RX esp, RX bms vào TX esp).
+   - BẮT BUỘC phải nối chung chân GND giữa ESP32-S3 và mạch AntBMS.
+   --------------------------------------------------------------------------
+
+   |   Chân Tín Hiệu AntBMS|  Chân Bo Mạch ESP32-S3 |         Ghi chú          |
+   --------------------------------------------------------------------------
+
+   |         TX            |     GPIO 18 (RX1)      | Nhận dữ liệu từ BMS    |
+   |         RX            |     GPIO 17 (TX1)      | Gửi lệnh sang BMS      |
+   |         GND           |          GND           | Mass chung (Bắt buộc)  |
+   --------------------------------------------------------------------------
+
+⚠️ LƯU Ý CHO S3: Khai báo cổng Serial trong code phải chuyển thành UART1:
+   -> Sửa dòng: HardwareSerial _bms(2); thành HardwareSerial _bms(1);
+   -> Đảm bảo macro cấu hình chân khớp với bảng trên.
+===================================================================================
+*/
+
+
 
 #include <SPI.h>
 #include <mcp_can.h>
