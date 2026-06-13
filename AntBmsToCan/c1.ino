@@ -861,6 +861,10 @@ Grabs data from the BMS and onward posts to CAN
 readBms()
 Grabs data from the BMS and onward posts to CAN
 */
+/*
+readBms()
+Grabs data from the BMS and onward posts to CAN
+*/
 void readBms()
 {
   bool goodCrc = false;
@@ -873,95 +877,117 @@ void readBms()
   const byte startMark[] = { 0xAA, 0x55, 0xAA, 0xFF };
   
   // Buffer for incoming data
-  byte incomingBuffer[ BMS_MESSAGE_LENGTH] = { 0 };
+  byte incomingBuffer[ BMS_MESSAGE_LENGTH ] = { 0 };
   
   // Testing fixed messages, see USE_FIXED_MESSAGE_FOR_DEBUGGING above.
-  byte fixedTestMessage[ BMS_MESSAGE_LENGTH] = { 0xAA, 0x55, 0xAA, 0xFF, 0x02, 0x30, 0x09, 0xE4, 0x09, 0xE5, 0x09, 0xE5, 0x09, 0xE4, 0x09, 0xE6, 0x09, 0xE6, 0x09, 0xC4, 0x09, 0xE8, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xFE, 0x0A, 0x0B, 0x0A, 0x05, 0x0A, 0x09, 0x0A, 0x06, 0x0A, 0x0D, 0x09, 0xDE, 0x0A, 0x0A, 0x0A, 0x04, 0x0A, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2B, 0x63, 0x07, 0x27, 0x0E, 0x00, 0x06, 0xF4, 0xFA, 0x25, 0x00, 0xE8, 0xAF, 0xE2, 0x01, 0xFF, 0xC9, 0x8B, 0x00, 0x14, 0x00, 0x13, 0x00, 0x11, 0x00, 0x11, 0x00, 0x12, 0x00, 0x12, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0xF0, 0x12, 0x0A, 0x0D, 0x07, 0x09, 0xC4, 0x09, 0xF1, 0x16, 0xFF, 0xFF, 0x00, 0x7E, 0x00, 0x7A, 0x02, 0xB0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1D, 0x8D};
-  
+  byte fixedTestMessage[ BMS_MESSAGE_LENGTH ] = { 0xAA, 0x55, 0xAA, 0xFF, 0x02, 0x30, 0x09, 0xE4, 0x09, 0xE5, 0x09, 0xE5, 0x09, 0xE4, 0x09, 0xE6, 0x09, 0xE6, 0x09, 0xC4, 0x09, 0xE8, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xE8, 0x09, 0xE9, 0x09, 0xFE, 0x0A, 0x0B, 0x0A, 0x05, 0x0A, 0x09, 0x0A, 0x06, 0x0A, 0x0D, 0x09, 0xDE, 0x0A, 0x0A, 0x0A, 0x04, 0x0A, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2B, 0x63, 0x07, 0x27, 0x0E, 0x00, 0x06, 0xF4, 0xFA, 0x25, 0x00, 0xE8, 0xAF, 0xE2, 0x01, 0xFF, 0xC9, 0x8B, 0x00, 0x14, 0x00, 0x13, 0x00, 0x11, 0x00, 0x11, 0x00, 0x12, 0x00, 0x12, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0xF0, 0x12, 0x0A, 0x0D, 0x07, 0x09, 0xC4, 0x09, 0xF1, 0x16, 0xFF, 0xFF, 0x00, 0x7E, 0x00, 0x7A, 0x02, 0xB0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1D, 0x8D };
   size_t bytesReceived;
-  char hexChar[ 3];
+  char hexChar[ 3 ];
   uint32_t tempCalc = 0;
-  
+
   auto ant_get_16bit = [&]( size_t i) -> uint16_t {
-    return ( uint16_t(incomingBuffer[i + 0]) << 8) | ( uint16_t(incomingBuffer[i + 1]) << 0);
+    return ( uint16_t(incomingBuffer[ i + 0 ]) << 8) | ( uint16_t(incomingBuffer[ i + 1 ]) << 0);
   };
-  
   auto ant_get_32bit = [&]( size_t i) -> uint32_t {
     return ( uint32_t( ant_get_16bit(i + 0)) << 16) | ( uint32_t( ant_get_16bit(i + 2)) << 0);
   };
-  
+
   _bms. flush();
-  while (_bms. available())
-  {
+  while (_bms. available()) {
     _bms. read();
   }
 
-  // --- MÔ PHỎNG DỮ LIỆU ĐỂ KIỂM TRA DEBUG ---
-  // Khi bạn bật cờ USE_FIXED_MESSAGE_FOR_DEBUGGING lên true, hệ thống sẽ tự nạp gói dữ liệu mẫu này
+  // Gửi lệnh yêu cầu dữ liệu tới mạch AntBMS qua HardwareSerial
+  _bms. write(requestCommand, sizeof(requestCommand));
+
+  // Kiểm tra chế độ Debug sử dụng mảng gói tin giả lập cố định
   if (USE_FIXED_MESSAGE_FOR_DEBUGGING) {
+    delay(10);
     memcpy(incomingBuffer, fixedTestMessage, BMS_MESSAGE_LENGTH);
-    goodCrc = true;
-    
-    // Gán dữ liệu mẫu vào cấu trúc phản hồi để phân tích kiểm tra luồng phát CAN
-    _receivedResponse.cells = 22; 
-    _receivedResponse.totalVoltage = 57.59;
-    _receivedResponse.current = 15.4;
-    _receivedResponse.soc = 85.0;
-    _receivedResponse.maxCellVoltage = 2.615;
-    _receivedResponse.minCellVoltage = 2.610;
-    _receivedResponse.temperatures[TEMPERATURE_MOSFET] = 32.5;
-    _receivedResponse.temperatures[TEMPERATURE_SENSOR_1] = 28.0;
-    _receivedResponse.rawSoc = 85;
+    bytesReceived = BMS_MESSAGE_LENGTH;
+  } else {
+    bytesReceived = _bms. readBytes(incomingBuffer, BMS_MESSAGE_LENGTH);
   }
 
-  // -------------------------------------------------------------------------
-  // ĐỒNG BỘ DỮ LIỆU SANG ĐƠN VỊ SOLXPOW (Xóa bỏ phần mã lặp)
-  // -------------------------------------------------------------------------
-  // 1. Điện áp tổng (V -> dV) và Dòng điện (A -> dA)
-  datalayer.battery.status.voltage_dV = (uint16_t)round(_receivedResponse.totalVoltage * 10.0);
-  datalayer.battery.status.reported_current_dA = (int32_t)round(_receivedResponse.current * 10.0);
-  
-  // 2. Định dạng dung lượng sạc phần trăm SoC & SOH 
-  datalayer.battery.status.reported_soc = (uint32_t)round(_receivedResponse.soc * 100.0);
-  datalayer.battery.status.soh_pptt = 10000; 
+  // Xác thực gói tin nhận về (độ dài và ký tự Header bắt đầu)
+  if (bytesReceived == BMS_MESSAGE_LENGTH) {
+    for (int i = 0; i < 4; i++) {
+      if (incomingBuffer[ i ] != startMark[ i ]) {
+        goodHeader = false;
+      }
+    }
 
-  // 3. Giới hạn giá trị điện áp từng cell pin (V -> mV)
-  datalayer.battery.status.cell_max_voltage_mV = (uint16_t)round(_receivedResponse.maxCellVoltage * 1000.0);
-  datalayer.battery.status.cell_min_voltage_mV = (uint16_t)round(_receivedResponse.minCellVoltage * 1000.0);
+    if (goodHeader) {
+      uint16_t crcCalculated = calcChecksum(incomingBuffer, BMS_MESSAGE_LENGTH - 2);
+      uint16_t crcReceived = ant_get_16bit(BMS_MESSAGE_LENGTH - 2);
+      if (crcCalculated == crcReceived) {
+        goodCrc = true;
+      }
+    }
+  }
 
-  // 4. Đồng bộ hóa mảng nhiệt độ giám sát mạch (C -> dC)
-  datalayer.battery.status.temperature_max_dC = (int16_t)round(_receivedResponse.temperatures[TEMPERATURE_MOSFET] * 10.0);
-  datalayer.battery.status.temperature_min_dC = (int16_t)round(_receivedResponse.temperatures[TEMPERATURE_SENSOR_1] * 10.0);
+  // Phân tích dữ liệu từ mảng Byte nếu gói tin hợp lệ
+  if (goodCrc) {
+    _bmsValidResponseCounter++;
 
-  // 5. Nạp cấu hình bảo vệ dòng sạc xả tối đa từ cấu hình macro đầu file
-  datalayer.battery.status.max_charge_current_dA = CHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
-  datalayer.battery.status.max_discharge_current_dA = DISCHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
+    // Bóc tách điện áp tổng, dòng điện, dung lượng số từ mảng byte của AntBMS
+    _receivedResponse. rawTotalVoltage = ant_get_16bit(4);
+    _receivedResponse. totalVoltage = _receivedResponse. rawTotalVoltage / 10.0;
 
-  // 6. Tính toán ngưỡng ngắt điện áp an toàn cho khung dữ liệu 0x4220
-  charge_cutoff_voltage_dV = (uint16_t)((CHARGE_VOLTAGE_LIMIT_CVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100);
-  discharge_cutoff_voltage_dV = (uint16_t)((DISCHARGE_VOLTAGE_LIMIT_DVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100);
+    // Trích xuất thông số điện áp của từng cell pin độc lập
+    for (int i = 0; i < MAX_CELLS_SUPPORTED_BY_BMS; i++) {
+      _receivedResponse. cellVoltage[ i ] = ant_get_16bit(6 + (i * 2)) / 1000.0;
+    }
 
-  // -------------------------------------------------------------------------
-  // IN THÔNG TIN KIỂM TRA RA CỔNG COM MONITOR
-  // -------------------------------------------------------------------------
-  Serial.printf("\n[DEBUG-CAN] totalVoltage=%f, current=%f, soc=%f, maxCell=%f, minCell=%f\n", 
-                _receivedResponse.totalVoltage, _receivedResponse.current, _receivedResponse.soc, 
-                _receivedResponse.maxCellVoltage, _receivedResponse.minCellVoltage);
+    _receivedResponse. rawCurrent = ant_get_32bit(70);
+    _receivedResponse. current = ((int32_t)_receivedResponse. rawCurrent) / 10.0;
+    _receivedResponse. rawSoc = incomingBuffer[ 74 ];
+    _receivedResponse. soc = _receivedResponse. rawSoc;
 
-  // Gọi hàm in log dữ liệu gốc và kích hoạt lệnh đẩy dữ liệu lên mạng phần cứng CAN bus
+    _receivedResponse. maxCellVoltage = ant_get_16bit(116) / 1000.0;
+    _receivedResponse. minCellVoltage = ant_get_16bit(119) / 1000.0;
+    _receivedResponse. cells = incomingBuffer[ 123 ];
+
+    _receivedResponse. temperatures[ TEMPERATURE_MOSFET ] = (int16_t)ant_get_16bit(82);
+    _receivedResponse. temperatures[ TEMPERATURE_SENSOR_1 ] = (int16_t)ant_get_16bit(86);
+
+    // -------------------------------------------------------------------------
+    // ĐỒNG BỘ DỮ LIỆU SANG ĐƠN VỊ CỦA SOLXPOW CAN-BUS
+    // -------------------------------------------------------------------------
+    datalayer. battery. status. voltage_dV = ( uint16_t) round(_receivedResponse. totalVoltage * 10.0);
+    datalayer. battery. status. reported_current_dA = ( int32_t) round(_receivedResponse. current * 10.0);
+    datalayer. battery. status. reported_soc = ( uint32_t) round(_receivedResponse. soc * 100.0);
+    datalayer. battery. status. soh_pptt = 10000; 
+
+    datalayer. battery. status. cell_max_voltage_mV = ( uint16_t) round(_receivedResponse. maxCellVoltage * 1000.0);
+    datalayer. battery. status. cell_min_voltage_mV = ( uint16_t) round(_receivedResponse. minCellVoltage * 1000.0);
+
+    datalayer. battery. status. temperature_max_dC = ( int16_t) round(_receivedResponse. temperatures[ TEMPERATURE_MOSFET ] * 10.0);
+    datalayer. battery. status. temperature_min_dC = ( int16_t) round(_receivedResponse. temperatures[ TEMPERATURE_SENSOR_1 ] * 10.0);
+
+    datalayer. battery. status. max_charge_current_dA = CHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
+    datalayer. battery. status. max_discharge_current_dA = DISCHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP;
+
+    charge_cutoff_voltage_dV = ( uint16_t)(( CHARGE_VOLTAGE_LIMIT_CVL_IN_MILLIVOLTS * _receivedResponse. cells) / 100);
+    discharge_cutoff_voltage_dV = ( uint16_t)(( DISCHARGE_VOLTAGE_LIMIT_DVL_IN_MILLIVOLTS * _receivedResponse. cells) / 100);
+
+    Serial. printf("\n[DEBUG-CAN] totalVoltage=%f, current=%f, soc=%f, maxCell=%f, minCell=%f\n", 
+                  _receivedResponse. totalVoltage, _receivedResponse. current, _receivedResponse. soc, 
+                  _receivedResponse. maxCellVoltage, _receivedResponse. minCellVoltage);
+  } else {
+    _bmsInvalidResponseCounter++;
+  }
+
+  // Gọi hàm xuất log cũ và thực thi gửi chuỗi gói tin lên mạng CAN bus phần cứng
   printValuesToSerialAndSendToMQTTIfUsing();
   
   const bool canResult = sendCanMessage();
-  if (canResult)
-  {
+  if (canResult) {
     _canSuccessCounter++;
-  }
-  else
-  {
+  } else {
     _canFailureCounter++;
   }
   
-  // Điều khiển chớp tắt LED trạng thái tích hợp trên bo mạch
   digitalWrite( LED_BUILTIN, digitalRead( LED_BUILTIN) == LOW ? HIGH : LOW);
   return;
 }
