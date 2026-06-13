@@ -1,27 +1,7 @@
-/*
-===================================================================================
-             SƠ ĐỒ ĐẤU NỐI PHẦN CỨNG AN TOÀN CHO CHIP ESP32-S3
-===================================================================================
-1. KẾT NỐI ESP32-S3 VỚI MODULE CAN BUS MCP2515 (Giao tiếp SPI thạch anh 8MHz)
-   - VCC  -> 5V / VBUS trên ESP32-S3
-   - GND  -> GND chung
-   - CS   -> GPIO 10
-   - SO (MISO) -> GPIO 13
-   - SI (MOSI) -> GPIO 11
-   - SCK  -> GPIO 12
-   - INT  -> GPIO 14
-2. KẾT NỐI ESP32-S3 VỚI MẠCH ANTBMS (Giao tiếp Serial / UART1 AN TOÀN)
-   - TX AntBMS -> GPIO 16 (RX1 của ESP32-S3)
-   - RX AntBMS -> GPIO 15 (TX1 của ESP32-S3)
-   - GND       -> GND chung (Bắt buộc nối mass chung)
-===================================================================================
-*/
-
 #include <SPI.h>
 #include <mcp_can.h>
 #include <HardwareSerial.h>
 
-// BẬT WIFI VÀ MQTT
 #define USE_WIFI_AND_MQTT
 
 #ifdef USE_WIFI_AND_MQTT
@@ -38,12 +18,12 @@
 #endif
 
 #define CHARGE_VOLTAGE_LIMIT_CVL_IN_MILLIVOLTS 3550
+#define DISCHARGE_VOLTAGE_LIMIT_DVL_IN_MILLIVOLTS 2900
 #define CHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP 260
 #define DISCHARGE_CURRENT_LIMIT_IN_TENTHS_OF_AN_AMP 260
-#define DISCHARGE_VOLTAGE_LIMIT_DVL_IN_MILLIVOLTS 2900
 #define BMS_QUERY_INTERVAL 1000
-
 #define BMS_TIMEOUT 250
+
 #define USE_FIXED_MESSAGE_FOR_DEBUGGING true
 #define WHEN_BMS_READ_FAILED_PRINT_VALUES_TO_SERIAL_AND_SEND_TO_MQTT_IF_USING_ANYWAY false
 
@@ -56,17 +36,17 @@
 #define MCP2515_CS 10
 #define MCP2515_INT 14
 
-// ĐỊNH NGHĨA CHÂN UART AN TOÀN CHO ESP32-S3 (TRÁNH CHÂN BOOT 17, 18)
 #define BMS_RX_PIN 16
 #define BMS_TX_PIN 15
 #define BMS_BAUD_RATE 19200 
 #define ESP_DEBUGGING_BAUD_RATE 115200
 
-#define MAX_CELLS_SUPPORTED_BY_BMS 30
+#define MAX_CELLS_SUPPORTED_BY_BMS 32
 #define MAX_TEMPERATURE_SENSORS_SUPPORTED_BY_BMS 6
 #define TEMPERATURE_MOSFET 0
 #define TEMPERATURE_SENSOR_1 2
 #define BMS_MESSAGE_LENGTH 140
+
 enum SystemStatus { NORMAL, FAULT };
 enum CanAliveStatus { CAN_STILL_ALIVE, CAN_DEAD };
 
@@ -96,13 +76,13 @@ struct DatalayerStruct {
 DatalayerStruct datalayer;
 uint16_t charge_cutoff_voltage_dV = 0;
 uint16_t discharge_cutoff_voltage_dV = 0;
-uint16_t user_selected_inverter_cells = 22; 
+
+uint16_t user_selected_inverter_cells = 32; 
 uint16_t user_selected_inverter_modules = 1;
-uint16_t user_selected_inverter_cells_per_module = 22;
-uint16_t user_selected_inverter_voltage_level = 480;
+uint16_t user_selected_inverter_cells_per_module = 32;
+uint16_t user_selected_inverter_voltage_level = 1024; 
 uint16_t user_selected_inverter_ah_capacity = 100;
 
-// SỬ DỤNG UART1 CHO CHIP ESP32-S3
 HardwareSerial _bms(1); 
 
 unsigned long _bmsValidResponseCounter = 0;
@@ -117,7 +97,6 @@ int _bufferSize;
 int _maxPayloadSize;
 char* _mqttPayload;
 #endif
-
 struct bmsResponse {
   uint16_t rawTotalVoltage;
   float totalVoltage;
@@ -134,7 +113,7 @@ struct bmsResponse {
 bmsResponse _receivedResponse;
 
 MCP_CAN CAN0(MCP2515_CS);
-// ======================== PORT HELPER FUNCTIONS ========================
+
 static inline void write16_be(uint8_t *buf, uint16_t val) {
   buf[0] = (uint8_t)((val >> 8) & 0xFF);
   buf[1] = (uint8_t)(val & 0xFF);
@@ -152,31 +131,51 @@ static inline uint16_t clamp16(int32_t v) {
   return (uint16_t)v;
 }
 
-// ======================== BUILDERS FOR SOLXPOW FRAMES ========================
+void build_frame_7310(uint8_t *data) {
+  data[0] = 0x01; data[1] = 0x00; data[2] = 0x02; data[3] = 0x01;
+  data[4] = 0x01; data[5] = 0x02; data[6] = 0x00; data[7] = 0x00;
+}
+
+void build_frame_7320(uint8_t *data) {
+  memset((void*)data, 0, 8);
+  data[0] = (uint8_t)(user_selected_inverter_cells & 0xFF);
+  data[1] = (uint8_t)((user_selected_inverter_cells >> 8) & 0xFF);
+  data[2] = (uint8_t)user_selected_inverter_modules;
+  data[3] = (uint8_t)user_selected_inverter_cells_per_module;
+  data[4] = (uint8_t)(user_selected_inverter_voltage_level & 0xFF);
+  data[5] = (uint8_t)((user_selected_inverter_voltage_level >> 8) & 0xFF);
+  data[6] = (uint8_t)(user_selected_inverter_ah_capacity & 0xFF);
+  data[7] = (uint8_t)((user_selected_inverter_ah_capacity >> 8) & 0xFF);
+}
+
+void build_frame_7330_7340(uint8_t *data) {
+  memset((void*)data, 0x58, 8);
+}
+
 void build_frame_4210(uint8_t *data) {
-  write16(&data[0], clamp16((int32_t)datalayer.battery.voltage_dV));
-  write16(&data[2], (uint16_t)((int16_t)datalayer.battery.reported_current_dA));
-  write16(&data[4], clamp16((int32_t)(datalayer.battery.temperature_max_dC + 1000)));
+  write16_be(&data[0], clamp16((int32_t)datalayer.battery.voltage_dV));
+  write16_be(&data[2], (uint16_t)((int16_t)datalayer.battery.reported_current_dA));
+  write16_be(&data[4], clamp16((int32_t)(datalayer.battery.temperature_max_dC + 1000)));
   data[6] = (uint8_t)constrain((int)round(datalayer.battery.reported_soc / 100.0f), 0, 100);
   data[7] = (uint8_t)constrain((int)round(datalayer.battery.soh_pptt / 100.0f), 0, 100);
 }
 
 void build_frame_4220(uint8_t *data) {
-  write16(&data[0], clamp16((int32_t)charge_cutoff_voltage_dV));
-  write16(&data[2], clamp16((int32_t)discharge_cutoff_voltage_dV));
-  write16(&data[4], clamp16((int32_t)datalayer.battery.max_charge_current_dA));
-  write16(&data[6], clamp16((int32_t)datalayer.battery.max_discharge_current_dA));
+  write16_be(&data[0], clamp16((int32_t)charge_cutoff_voltage_dV));
+  write16_be(&data[2], clamp16((int32_t)discharge_cutoff_voltage_dV));
+  write16_be(&data[4], clamp16((int32_t)datalayer.battery.max_charge_current_dA));
+  write16_be(&data[6], clamp16((int32_t)datalayer.battery.max_discharge_current_dA));
 }
 
 void build_frame_4230(uint8_t *data) {
-  write16(&data[0], clamp16((int32_t)datalayer.battery.cell_max_voltage_mV));
-  write16(&data[2], clamp16((int32_t)datalayer.battery.cell_min_voltage_mV));
+  write16_be(&data[0], clamp16((int32_t)datalayer.battery.cell_max_voltage_mV));
+  write16_be(&data[2], clamp16((int32_t)datalayer.battery.cell_min_voltage_mV));
   data[4] = data[5] = data[6] = data[7] = 0;
 }
 
 void build_frame_4240(uint8_t *data) {
-  write16(&data[0], clamp16((int32_t)datalayer.battery.temperature_max_dC));
-  write16(&data[2], clamp16((int32_t)datalayer.battery.temperature_min_dC));
+  write16_be(&data[0], clamp16((int32_t)datalayer.battery.temperature_max_dC));
+  write16_be(&data[2], clamp16((int32_t)datalayer.battery.temperature_min_dC));
   data[4] = data[5] = data[6] = data[7] = 0;
 }
 
@@ -189,15 +188,18 @@ void build_frame_4250(uint8_t *data) {
   data[1] = data[2] = data[3] = data[4] = data[5] = data[6] = data[7] = 0;
 }
 
-void build_frame_7320(uint8_t *data) {
-  memset((void*)data, 0, 8);
-  if (user_selected_inverter_cells > 0) write16(&data[0], user_selected_inverter_cells);
-  data[2] = (uint8_t)user_selected_inverter_modules;
-  data[3] = (uint8_t)user_selected_inverter_cells_per_module;
-  if (user_selected_inverter_voltage_level > 0) write16(&data[4], user_selected_inverter_voltage_level);
-  if (user_selected_inverter_ah_capacity > 1) write16(&data[6], user_selected_inverter_ah_capacity);
+void build_frame_4260(uint8_t *data) {
+  uint32_t total_ah = user_selected_inverter_ah_capacity * 1000;
+  data[0] = total_ah & 0xFF;         data[1] = (total_ah >> 8) & 0xFF;
+  data[2] = (total_ah >> 16) & 0xFF; data[3] = (total_ah >> 24) & 0xFF;
+  data[4] = 0x03; data[5] = 0x00;
+  data[6] = 0x02; data[7] = 0x00;
 }
-// ======================== WIFI & MQTT MANAGEMENT ========================
+
+void build_frame_4270(uint8_t *data) {
+  data[0] = 0x7E; data[1] = 0x04; data[2] = 0x62; data[3] = 0x04;
+  data[4] = 0x05; data[5] = 0x00; data[6] = 0x01; data[7] = 0x00;
+}
 #ifdef USE_WIFI_AND_MQTT
 void setupWifi() {
   if (WiFi.status() == WL_CONNECTED) return;
@@ -211,13 +213,12 @@ void setupWifi() {
 }
 
 void mqttReconnect() {
-  while (!_mqtt.connected() && WiFi.status() == WL_CONNECTED) {
+  if (!_mqtt.connected() && WiFi.status() == WL_CONNECTED) {
     Serial.print("Attempting MQTT connection...");
     if (_mqtt.connect(DEVICE_NAME, MQTT_USERNAME, MQTT_PASSWORD)) {
       Serial.println("Connected to MQTT Broker!");
     } else {
-      Serial.printf("Failed, state=%d. Retry in 2 seconds...\n", _mqtt.state());
-      delay(2000);
+      Serial.printf("Failed, state=%d\n", _mqtt.state());
     }
   }
 }
@@ -254,40 +255,44 @@ uint16_t calcChecksum(const uint8_t data[], const uint16_t len) {
   for (uint16_t i = 4; i < len; i++) { checksum += data[i]; }
   return checksum;
 }
-// ======================== TRANSMIT CAN MESSAGE ========================
+
 bool sendCanMessage() {
   bool result = true;
   uint8_t data[8];
-  byte canResult;
+
+  build_frame_7310(data);
+  if (CAN0.sendMsgBuf(0x7310, 1, 8, data) != CAN_OK) result = false;
 
   build_frame_7320(data);
-  canResult = CAN0.sendMsgBuf(0x7320, 1, 8, data);
-  if (canResult != CAN_OK) { result = false; printCanResultToSerialMCP(0x7320, canResult); }
+  if (CAN0.sendMsgBuf(0x7320, 1, 8, data) != CAN_OK) result = false;
+
+  build_frame_7330_7340(data);
+  if (CAN0.sendMsgBuf(0x7330, 1, 8, data) != CAN_OK) result = false;
+  if (CAN0.sendMsgBuf(0x7340, 1, 8, data) != CAN_OK) result = false;
 
   build_frame_4210(data);
-  canResult = CAN0.sendMsgBuf(0x4210, 1, 8, data);
-  if (canResult != CAN_OK) { result = false; printCanResultToSerialMCP(0x4210, canResult); }
+  if (CAN0.sendMsgBuf(0x4210, 1, 8, data) != CAN_OK) result = false;
 
   build_frame_4220(data);
-  canResult = CAN0.sendMsgBuf(0x4220, 1, 8, data);
-  if (canResult != CAN_OK) { result = false; printCanResultToSerialMCP(0x4220, canResult); }
+  if (CAN0.sendMsgBuf(0x4220, 1, 8, data) != CAN_OK) result = false;
 
   build_frame_4230(data);
-  canResult = CAN0.sendMsgBuf(0x4230, 1, 8, data);
-  if (canResult != CAN_OK) { result = false; printCanResultToSerialMCP(0x4230, canResult); }
+  if (CAN0.sendMsgBuf(0x4230, 1, 8, data) != CAN_OK) result = false;
 
   build_frame_4240(data);
-  canResult = CAN0.sendMsgBuf(0x4240, 1, 8, data);
-  if (canResult != CAN_OK) { result = false; printCanResultToSerialMCP(0x4240, canResult); }
+  if (CAN0.sendMsgBuf(0x4240, 1, 8, data) != CAN_OK) result = false;
 
   build_frame_4250(data);
-  canResult = CAN0.sendMsgBuf(0x4250, 1, 8, data);
-  if (canResult != CAN_OK) { result = false; printCanResultToSerialMCP(0x4250, canResult); }
+  if (CAN0.sendMsgBuf(0x4250, 1, 8, data) != CAN_OK) result = false;
+
+  build_frame_4260(data);
+  if (CAN0.sendMsgBuf(0x4260, 1, 8, data) != CAN_OK) result = false;
+
+  build_frame_4270(data);
+  if (CAN0.sendMsgBuf(0x4270, 1, 8, data) != CAN_OK) result = false;
 
   return result;
 }
-
-// ======================== LUỒNG ĐỌC VÀ ĐỒNG BỘ DATA BMS ========================
 void readBms() {
   bool goodCrc = false; bool goodHeader = true;
   const byte requestCommand[] = { 0x5A, 0x5A, 0x00, 0x00, 0x01, 0x01 };
@@ -321,22 +326,23 @@ void readBms() {
       if (crcCalculated == crcReceived) goodCrc = true;
     }
   }
-
   if (goodCrc) {
     _bmsValidResponseCounter++;
     _receivedResponse.rawTotalVoltage = ant_get_16bit(4);
     _receivedResponse.totalVoltage = _receivedResponse.rawTotalVoltage / 10.0;
     _receivedResponse.rawCurrent = ant_get_32bit(70);
     _receivedResponse.current = ((int32_t)_receivedResponse.rawCurrent) / 10.0;
+    
     _receivedResponse.rawSoc = incomingBuffer[74];
-    _receivedResponse.soc = _receivedResponse.rawSoc;
+    _receivedResponse.soc = (_receivedResponse.rawSoc > 100) ? 100.0 : _receivedResponse.rawSoc;
+    
     _receivedResponse.maxCellVoltage = ant_get_16bit(116) / 1000.0;
     _receivedResponse.minCellVoltage = ant_get_16bit(119) / 1000.0;
-    _receivedResponse.cells = incomingBuffer[122];
+    _receivedResponse.cells = user_selected_inverter_cells;
+    
     _receivedResponse.temperatures[TEMPERATURE_MOSFET] = (int16_t)ant_get_16bit(82);
     _receivedResponse.temperatures[TEMPERATURE_SENSOR_1] = (int16_t)ant_get_16bit(86);
 
-    // MAPPING SANG CẤU TRÚC CAN BUS SOLXPOW
     datalayer.battery.voltage_dV = (uint16_t)round(_receivedResponse.totalVoltage * 10.0);
     datalayer.battery.reported_current_dA = (int32_t)round(_receivedResponse.current * 10.0);
     datalayer.battery.reported_soc = (uint32_t)round(_receivedResponse.soc * 100.0);
@@ -350,11 +356,11 @@ void readBms() {
     
     charge_cutoff_voltage_dV = (uint16_t)((CHARGE_VOLTAGE_LIMIT_CVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100);
     discharge_cutoff_voltage_dV = (uint16_t)((DISCHARGE_VOLTAGE_LIMIT_DVL_IN_MILLIVOLTS * _receivedResponse.cells) / 100);
-    if (_receivedResponse.rawSoc == 0) datalayer.system.system_status = FAULT; else datalayer.system.system_status = NORMAL;
+    if (_receivedResponse.soc == 0) datalayer.system.system_status = FAULT; else datalayer.system.system_status = NORMAL;
 
-    Serial.printf("\n[DEBUG-CAN] totalVoltage=%f, current=%f, soc=%f, maxCell=%f, minCell=%f\n", 
+    Serial.printf("\n[DEBUG-CAN] totalVoltage=%f, current=%f, soc=%f, maxCell=%f, cells=%d\n", 
                   _receivedResponse.totalVoltage, _receivedResponse.current, _receivedResponse.soc, 
-                  _receivedResponse.maxCellVoltage, _receivedResponse.minCellVoltage);
+                  _receivedResponse.maxCellVoltage, _receivedResponse.cells);
   } else {
     _bmsInvalidResponseCounter++;
   }
@@ -363,12 +369,11 @@ void readBms() {
   const bool canResult = sendCanMessage();
   if (canResult) _canSuccessCounter++; else _canFailureCounter++;
 }
-// ======================== SETUP & LOOP FUNCTIONS ========================
 void setup() {
   Serial.begin(ESP_DEBUGGING_BAUD_RATE);
-  delay(1000); 
-  Serial.println("\n--- HỆ THỐNG KHỞI ĐỘNG (GIỮ CHÂN CŨ) ---");
-  
+  delay(1000);
+  Serial.println("\n--- HE THONG KHOI DONG HE 32 CELL ---");
+
   _bms.begin(BMS_BAUD_RATE, SERIAL_8N1, BMS_RX_PIN, BMS_TX_PIN);
   _bms.setTimeout(BMS_TIMEOUT);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -382,33 +387,45 @@ void setup() {
     _mqttPayload = new char[_maxPayloadSize];
     memset(_mqttPayload, 0, _maxPayloadSize);
   }
-  mqttReconnect();
 #endif
 
-  // GIỮ NGUYÊN CỤM CHÂN CŨ CỦA BẠN (12, 13, 11, 10)
-  SPI.begin(12, 13, 11, 10); 
-  
-  // SỬA: Ép hạ tốc độ xung SPI xuống 1MHz để mạch đệm YF08F chạy kịp, không bị méo sóng
-  SPI.setClockDivider(SPI_CLOCK_DIV8); 
-  
+  SPI.begin(12, 13, 11, 10);
+  SPI.setClockDivider(SPI_CLOCK_DIV8);
+
   Serial.println("Dang quet thiet bi CAN MCP2515...");
   byte errorCode = CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ);
   
-  // SỬA: Giới hạn thử lại 5 lần, nếu lỗi vẫn cho chạy tiếp để tránh treo cứng Serial
   int retryCount = 0;
-  while (errorCode != CAN_OK && retryCount < 5) {
-    Serial.printf(" CAN Lỗi cấu hình: 0x%X. Thử lại...\n", errorCode);
+  while (errorCode != CAN_OK && retryCount < 3) {
+    Serial.printf(" CAN Loi cau hinh: 0x%X. Thu lai...\n", errorCode);
     delay(300);
     errorCode = CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ);
     retryCount++;
   }
-  
+
   if (errorCode == CAN_OK) {
     CAN0.enOneShotTX();
     CAN0.setMode(MCP_NORMAL);
     pinMode(MCP2515_INT, INPUT_PULLUP);
-    Serial.println(" [OK] MCP2515 Khởi tạo thành công!");
+    Serial.println(" [OK] MCP2515 Khoi tao thanh cong!");
   } else {
-    Serial.println(" [CẢNH BÁO] Không kết nối được MCP2515. Hãy kiểm tra chân OE mạch đệm!");
+    Serial.println(" [CANH BAO] Khong tim thay MCP2515. Kiem tra nguon va OE!");
   }
+}
+
+void loop() {
+  static unsigned long lastBmsQuery = 0;
+
+#ifdef USE_WIFI_AND_MQTT
+  if (WiFi.status() != WL_CONNECTED) setupWifi();
+  mqttReconnect();
+  _mqtt.loop();
+#endif
+
+  if (millis() - lastBmsQuery >= BMS_QUERY_INTERVAL) {
+    lastBmsQuery = millis();
+    readBms();
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  }
+  delay(10);
 }
