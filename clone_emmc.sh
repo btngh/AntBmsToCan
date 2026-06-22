@@ -4,6 +4,12 @@ cat << 'EOF' > clone_full.sh
 # wget https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_emmc.sh
 # chmod +x clone_emmc.sh
 # ./clone_emmc.sh
+#
+# 1. Cài bộ công cụ phần cứng, đĩa thô và nén file
+# apt install -y binutils mmc-utils pv parted fdisk xxd wget curl net-tools iproute2 wireless-tools bridge-utils
+
+# 2. Cài môi trường lập trình để biên dịch code điều khiển Inverter và chạy file .ini
+#  apt install -y build-essential gcc make cmake git python3 python3-pip python3-dev libssl-dev i2c-tools minicom screen
 
 
 #!/bin/bash
