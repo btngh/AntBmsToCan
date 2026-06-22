@@ -1,6 +1,6 @@
 cat << 'EOF' > clone_full.sh
 
-
+# rm clone_full.sh
 # wget https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_emmc.sh
 # chmod +x clone_emmc.sh
 # ./clone_emmc.sh
