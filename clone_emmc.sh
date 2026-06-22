@@ -1,3 +1,8 @@
+#
+# wget https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_emmc.sh
+# chmod +x clone_emmc.sh
+# ./clone_emmc.sh
+
 #!/bin/bash
 # =========================================================================
 # SCRIPT TỰ ĐỘNG CHUYỂN UBUNTU NOBLE TỪ SD SANG eMMC CHO BANANA PI R2
