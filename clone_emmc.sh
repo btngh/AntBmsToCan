@@ -113,7 +113,7 @@ umount /mnt/emmc_boot
 umount /mnt/emmc_rootfs
 sync
 # LỆNH TỰ HỦY FILE SCRIPT TRÊN THẺ NHỚ TRƯỚC KHI TẮT MÁY
-
+rm -f "$0"
 echo "------------------------------------------------------------------------"
 echo ">>> THÀNH CÔNG RỰC RỠ! BO MẠCH SẼ TỰ ĐỘNG TẮT NGUỒN SAU 5 GIÂY <<<"
 echo ">>> ANH HÃY RÚT THẺ SD RA VÀ BẬT NGUỒN ĐỂ HƯỞNG THÀNH QUẢ KHỞI ĐỘNG SIÊU TỐC! <<<"
