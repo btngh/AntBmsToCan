@@ -1,4 +1,4 @@
-cat << 'EOF' > clone_full.sh
+
 
 # rm clone_emmc.sh
 # wget -O clone_emmc.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_emmc.sh?v=$(date +%s) | bash
