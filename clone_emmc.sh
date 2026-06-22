@@ -1,18 +1,25 @@
-#
+cat << 'EOF' > clone_full.sh
+
+
 # wget https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_emmc.sh
 # chmod +x clone_emmc.sh
 # ./clone_emmc.sh
 
+
 #!/bin/bash
 # =========================================================================
-# SCRIPT TỰ ĐỘNG CHUYỂN UBUNTU NOBLE TỪ SD SANG eMMC CHO BANANA PI R2
-# Thực hiện bởi: Anh Nam & AI Assistant
+# SCRIPT TỔNG LỰC: CLONE TỪ ĐẦU TỚI ĐUÔI TỪ THẺ SD SANG eMMC (BANANA PI R2)
+# Sửa đổi: Khôi phục kho chuẩn ports.ubuntu.com dành riêng cho chip ARM
 # =========================================================================
 
 echo "============================================="
-echo "BƯỚC 1: DỌN DẸP KHO APT VÀ CÀI ĐẶT CÔNG CỤ LÕI..."
+echo "BƯỚC 1: DỌN DẸP KHO APT VÀ CÀI ĐẶT CÔNG CỤ HỆ THỐNG LÕI..."
 echo "============================================="
+# Xóa bỏ file Docker amd64 gây lỗi nghẽn cập nhật
 rm -f /etc/apt/sources.list.d/*
+
+# Nạp kho phần mềm chuẩn PORTS dành riêng cho chip ARM
+
 cat <<EOF > /etc/apt/sources.list
 deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
 deb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
@@ -20,79 +27,95 @@ deb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted univers
 deb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
 EOF
 
-apt update && apt install -y binutils mmc-utils pv wget
+apt update
+apt install -y binutils mmc-utils pv wget
 
 echo "============================================="
-echo "BƯỚC 2: TẢI VÀ NẠP PRELOADER GỐC EMMC 2019..."
+echo "BƯỚC 2: TẢI VÀ NẠP PRELOADER GỐC EMMC CHÍNH HÃNG 2019..."
 echo "============================================="
+# Mở khóa ghi phân vùng ẩn boot0 của eMMC
 echo 0 > /sys/block/mmcblk1boot0/force_ro
-wget -O preloader_emmc.img.gz https://github.com
-gunzip -f preloader_emmc.img.gz
-dd if=preloader_emmc.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
-rm -f preloader_emmc.img
+
+# Tải file mồi nguồn chứa chữ ký số eMMC chuẩn xác từ kho hãng SINOVOIP
+https://github.com/BPI-SINOVOIP/BPI-files/blob/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
+gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
+
+# Nạp thẳng Preloader vào phân vùng ẩn chuyên dụng
+dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
+rm -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img
 
 echo "============================================="
-echo "BƯỚC 3: ĐỒNG BỘ U-BOOT SANG BỘ NHỚ EMMC CHÍNH..."
+echo "BƯỚC 3: ĐỒNG BỘ U-BOOT SANG PHÂN VÙNG CHÍNH VÀ KHÓA THANH GHI BOOT..."
 echo "============================================="
+# Copy U-boot đồng bộ từ thẻ SD sang eMMC tại vị trí block 320
 dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=1k skip=320 seek=320 count=1024 conv=sync,notrunc
+
+# Ra lệnh kích hoạt phần cứng eMMC chuyển sang chế độ boot 0x48
 mmc bootpart enable 1 1 /dev/mmcblk1
 
 echo "============================================="
-echo "BƯỚC 4: CLONE TOÀN BỘ HỆ ĐIỀU HÀNH SANG EMMC (MẤT VÀI PHÚT)..."
+echo "BƯỚC 4: CLONE TOÀN BỘ DỮ LIỆU HỆ ĐIỀU HÀNH SANG EMMC..."
 echo "============================================="
+# Thực hiện sao chép thô và hiển thị thanh tiến trình dung lượng trực quan
 dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
 
 echo "============================================="
-echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK VÀ CHỈ MỤC TỆP TIN..."
+echo "BƯỚC 5: QUÉT VÀ SỬA TOÀN BỘ LỖI CHỈ MỤC TỆP TIN (BLOCK BITMAP)..."
 echo "============================================="
+# Ép sửa chữa mọi cung block lỗi checksum chéo sinh ra do quá trình clone dữ liệu
 fsck.ext4 -y /dev/mmcblk1p2
 
 echo "============================================="
-echo "BƯỚC 6: CAN THIỆP HỆ THỐNG EMMC ĐỂ CHẶN TREO VÀ TRÀN LOG..."
+echo "BƯỚC 6: TIẾN HÀNH CAN THIỆP HỆ THỐNG EMMC ĐỂ KHÓA CHẾT BẪY LỖI..."
 echo "============================================="
+# Gắn kết các phân vùng eMMC ra thư mục tạm để chỉnh sửa cấu hình bên trong
 mkdir -p /mnt/emmc_boot
 mkdir -p /mnt/emmc_rootfs
 mount /dev/mmcblk1p1 /mnt/emmc_boot
 mount /dev/mmcblk1p2 /mnt/emmc_rootfs
 
-# Ép tham số mồi nhận diện đúng eMMC
-cat <<EOF > /mnt/emmc_boot/bananapi/bpi-r2/linux/uEnv.txt
+# 6.1. Tạo file cấu hình mồi uEnv.txt mới tinh, ép nhân Linux nhận đúng eMMC p2
+cat <<EOL > /mnt/emmc_boot/bananapi/bpi-r2/linux/uEnv.txt
 root=/dev/mmcblk1p2 rootwait
 bootargs=root=/dev/mmcblk1p2 rootwait console=ttyS2,115200 earlyprintk
 EOF
 
-# Sửa file fstab trỏ đúng về mmcblk1
-cat <<EOF > /mnt/emmc_rootfs/etc/fstab
+# 6.2. Sửa file fstab của eMMC trỏ đúng vào mmcblk1
+cat <<EOL > /mnt/emmc_rootfs/etc/fstab
 # <file system>         <dir>   <type>  <options>               <dump>  <pass>
 /dev/mmcblk1p1          /boot   vfat    errors=remount-ro       0       1
 /dev/mmcblk1p2          /       ext4    defaults                0       0
 EOF
 
-# Chặn driver đồ họa gây sụt áp eMMC
+# 6.3. Chặn driver đồ họa lỗi "lima" gây sụt áp bus điện eMMC khi khởi động độc lập
 echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
 
-# Khóa chết các dịch vụ bẫy gây treo máy 90 giây
+# 6.4. Dùng lệnh mask khóa chết vĩnh viễn chuỗi 5 dịch vụ bẫy gây đóng băng máy 90 giây
 ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
+ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journal-flush.service
 ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-networkd-wait-online.service
 ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
 ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/fstrim.service
+
+# Xóa hoàn toàn file dịch vụ Flush và dọn dẹp tàn dư log tồi cũ
 rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
 rm -rf /mnt/emmc_rootfs/var/log/journal/*
 rm -rf /mnt/emmc_rootfs/var/lib/systemd/timers/*
 
-# Chặn vĩnh viễn các dòng log tràn màn hình
+# 6.5. Hạ mức cảnh báo của nhân Linux (printk) xuống thấp nhất để chống tràn log thô ra màn hình console
 echo "kernel.printk = 3 4 1 3" >> /mnt/emmc_rootfs/etc/sysctl.conf
 
 echo "============================================="
-echo "BƯỚC 7: HOÀN TẤT, NGẮT Ổ ĐĨA AN TOÀN!"
+echo "BƯỚC 7: HOÀN TẤT, NGẮT GẮN KẾT Ổ ĐĨA AN TOÀN!"
 echo "============================================="
 umount /mnt/emmc_boot
 umount /mnt/emmc_rootfs
 sync
 
-echo "--------------------------------------------------------"
-echo ">>> THÀNH CÔNG! HỆ THỐNG SẼ TỰ TẮT NGUỒN SAU 5 GIÂY <<<"
-echo ">>> ANH HÃY RÚT THẺ SD RA VÀ BẬT NGUỒN ĐỂ HƯỞNG THÀNH QUẢ! <<<"
-echo "--------------------------------------------------------"
+echo "------------------------------------------------------------------------"
+echo ">>> THÀNH CÔNG RỰC RỠ! BO MẠCH SẼ TỰ ĐỘNG TẮT NGUỒN SAU 5 GIÂY <<<"
+echo ">>> ANH HÃY RÚT THẺ SD RA VÀ BẬT NGUỒN ĐỂ HƯỞNG THÀNH QUẢ KHỞI ĐỘNG SIÊU TỐC! <<<"
+echo "------------------------------------------------------------------------"
 sleep 5
 poweroff
+EOF
