@@ -9,11 +9,12 @@ echo "BƯỚC 1: DỌN DẸP KHO APT VÀ CÀI ĐẶT CÔNG CỤ LÕI..."
 echo "============================================="
 rm -f /etc/apt/sources.list.d/*
 cat <<EOF > /etc/apt/sources.list
-deb http://ubuntu.com noble main restricted universe multiverse
-deb http://ubuntu.com noble-updates main restricted universe multiverse
-deb http://ubuntu.com noble-backports main restricted universe multiverse
-deb http://ubuntu.com noble-security main restricted universe multiverse
+deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
+deb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
+deb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse
+deb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
 EOF
+
 apt update && apt install -y binutils mmc-utils pv wget
 
 echo "============================================="
