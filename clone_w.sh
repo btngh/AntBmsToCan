@@ -1,8 +1,8 @@
 cat << 'EOF' > clone_full.sh
 
 # rm clone_emmc.sh
-# wget -O clone_emmc.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_emmc.sh?v=$(date +%s)
-# chmod +x clone_emmc.sh
+# wget -O clone_emmcw.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_w.sh?v=$(date +%s)
+# chmod +x clone_emmcw.sh
 # ./clone_emmc.sh
 #
 # 1. Cài bộ công cụ phần cứng, đĩa thô và nén file
