@@ -43,7 +43,7 @@ dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
 echo "============================================="
 echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK BITMAP..."
 echo "============================================="
-fsck.ext4 -y /dev/mmcblk1p2
+#fsck.ext4 -y /dev/mmcblk1p2
 
 echo "============================================="
 echo "BƯỚC 6: CAN THIỆP HỆ THỐNG EMMC (DÙNG ECHO ĐỂ TRÁNH LỖI EOF)..."
@@ -57,12 +57,12 @@ echo "root=/dev/mmcblk1p2 rootwait" > /mnt/emmc_boot/bananapi/bpi-r2/linux/uEnv.
 echo -e "/dev/mmcblk1p1 /boot vfat errors=remount-ro 0 1\n/dev/mmcblk1p2 / ext4 defaults 0 0" > /mnt/emmc_rootfs/etc/fstab
 
 # Chặn driver đồ họa và các dịch vụ gây treo máy 90s
-echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
-rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
-rm -rf /mnt/emmc_rootfs/var/log/journal/*
-echo "kernel.printk = 3 4 1 3" >> /mnt/emmc_rootfs/etc/sysctl.conf
+#echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
+#ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
+#ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
+#rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
+#rm -rf /mnt/emmc_rootfs/var/log/journal/*
+#echo "kernel.printk = 3 4 1 3" >> /mnt/emmc_rootfs/etc/sysctl.conf
 
 echo "============================================="
 echo "BƯỚC 7: HOÀN TẤT VÀ TỰ HỦY SCRIPT TRÊN THẺ SD..."
