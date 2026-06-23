@@ -43,7 +43,7 @@ dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
 echo "============================================="
 echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK BITMAP..."
 echo "============================================="
-#fsck.ext4 -y /dev/mmcblk1p2
+fsck.ext4 -y /dev/mmcblk1p2
 
 echo "============================================="
 echo "BƯỚC 6: CAN THIỆP HỆ THỐNG EMMC (DÙNG ECHO ĐỂ TRÁNH LỖI EOF)..."
