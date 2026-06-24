@@ -24,16 +24,6 @@ echo "============================================="
 # apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
 
 
-# 1. Cài đặt công cụ can thiệp thanh ghi eMMC nếu chưa có
-# apt install -y mmc-utils
-
-# 2. Ép chip eMMC bật chế độ High-Speed Boot (Bus width 8-bit / x8)
-mmc buswidth set 2 /dev/mmcblk1
-
-# 3. Ép cấu hình phân vùng khởi động chính thức (Partition Config) trỏ vào boot0
-mmc bootpart enable 1 1 /dev/mmcblk1
-
-
 
 
 echo "============================================="
@@ -46,7 +36,12 @@ gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k seek=0 conv=notrunc,fdatasync
 gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=256 conv=notrunc,fdatasync
 
+# Bước 3: Chạy lệnh mmc chuẩn để khóa bit boot 0x48
+mmc bootpart enable 1 1 /dev/mmcblk1
 
+# Bước 4: Khóa an toàn vách bảo mật và ép xả bộ nhớ đệm
+echo 1 > /sys/block/mmcblk1boot0/force_ro
+sync
 
 echo "XONG! Rút thẻ SD và máy sẽ tự tắt sau 5s."
 sleep 5
