@@ -33,7 +33,7 @@ echo 0 > /sys/block/mmcblk1boot0/force_ro
 dd if=/dev/zero of=$BOOT0 bs=1M count=2 conv=notrunc
 
 # Tải và nạp bản Preloader thuần eMMC (Điểm bắt đầu 0k-offset) theo tài liệu Frank-W
-wget --no-check-certificate -O /tmp/preloader_emmc.img "https://github.com"
+wget --no-check-certificate -O /tmp/preloader_emmc.img https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-preloader-DDR1600-20190722-2k.img.gz
 gunzip -c /tmp/preloader_emmc.img.gz | dd of=$BOOT0 bs=1k seek=0 conv=notrunc
 
 echo "[4/5] Cloning core data and operating system..."
