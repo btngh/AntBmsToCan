@@ -38,7 +38,8 @@ echo "============================================="
 dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=1k skip=320 seek=320 count=1024 conv=sync,notrunc
 mmc bootpart enable 1 1 /dev/mmcblk1
 # Clone 7.3G dữ liệu
-dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
+#dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
+dd if=/dev/mmcblk0 bs=4M count=1825 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
 
 echo "============================================="
 echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK BITMAP..."
