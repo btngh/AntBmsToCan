@@ -46,24 +46,24 @@ echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK BITMAP..."
 echo "============================================="
 fsck.ext4 -y /dev/mmcblk1p2
 
-echo "============================================="
-echo "BƯỚC 6: CAN THIỆP HỆ THỐNG EMMC (DÙNG ECHO ĐỂ TRÁNH LỖI EOF)..."
-echo "============================================="
-mkdir -p /mnt/emmc_boot /mnt/emmc_rootfs
-mount /dev/mmcblk1p1 /mnt/emmc_boot
-mount /dev/mmcblk1p2 /mnt/emmc_rootfs
+# echo "============================================="
+# echo "BƯỚC 6: CAN THIỆP HỆ THỐNG EMMC (DÙNG ECHO ĐỂ TRÁNH LỖI EOF)..."
+# echo "============================================="
+# mkdir -p /mnt/emmc_boot /mnt/emmc_rootfs
+# mount /dev/mmcblk1p1 /mnt/emmc_boot
+# mount /dev/mmcblk1p2 /mnt/emmc_rootfs
 
 # Sửa uEnv.txt và fstab bằng lệnh echo (An toàn hơn cat <<EOL)
-echo "root=/dev/mmcblk1p2 rootwait" > /mnt/emmc_boot/bananapi/bpi-r2/linux/uEnv.txt
-echo -e "/dev/mmcblk1p1 /boot vfat errors=remount-ro 0 1\n/dev/mmcblk1p2 / ext4 defaults 0 0" > /mnt/emmc_rootfs/etc/fstab
+ # echo "root=/dev/mmcblk1p2 rootwait" > /mnt/emmc_boot/bananapi/bpi-r2/linux/uEnv.txt
+# echo -e "/dev/mmcblk1p1 /boot vfat errors=remount-ro 0 1\n/dev/mmcblk1p2 / ext4 defaults 0 0" > /mnt/emmc_rootfs/etc/fstab
 
 # Chặn driver đồ họa và các dịch vụ gây treo máy 90s
-echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
-rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
-rm -rf /mnt/emmc_rootfs/var/log/journal/*
-echo "kernel.printk = 3 4 1 3" >> /mnt/emmc_rootfs/etc/sysctl.conf
+# echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
+# ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
+# ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
+# rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
+# rm -rf /mnt/emmc_rootfs/var/log/journal/*
+# echo "kernel.printk = 3 4 1 3" >> /mnt/emmc_rootfs/etc/sysctl.conf
 
 echo "============================================="
 echo "BƯỚC 7: HOÀN TẤT VÀ TỰ HỦY SCRIPT TRÊN THẺ SD..."
