@@ -32,8 +32,8 @@ echo "============================================="
 echo 0 > /sys/block/mmcblk1boot0/force_ro
 wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
-gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
-dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k seek=0 conv=notrunc,fdatasync
+
+gunzip -c BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=0 conv=notrunc,fdatasync
 gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=256 conv=notrunc,fdatasync
 
 # Bước 3: Chạy lệnh mmc chuẩn để khóa bit boot 0x48
