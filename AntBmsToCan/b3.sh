@@ -35,7 +35,7 @@ gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=3
 
 mmc bootpart enable 1 1 /dev/mmcblk1
 # Clone 7.3G dữ liệu
-#dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
+dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
 dd if=/dev/mmcblk0 bs=4M count=1825 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
 
 echo "============================================="
