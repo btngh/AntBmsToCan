@@ -27,13 +27,12 @@ echo "============================================="
 echo "BƯỚC 2: NẠP PRELOADER GỐC EMMC 2019 (FIX LỖI LỆNH TẢI)..."
 echo "============================================="
 echo 0 > /sys/block/mmcblk1boot0/force_ro
-# Đã thêm lệnh wget và dùng link Raw chuẩn
-wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-0k-0905.img.gz
+wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
-gunzip -f BPI-R2-EMMC-boot0-DDR1600-0k-0905.img.gz
-dd if=BPI-R2-EMMC-boot0-DDR1600-0k-0905.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
-gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1024 seek=2 status=progress
-rm -f BPI-R2-EMMC-boot0-DDR1600-0k-0905.img
+gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
+dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
+gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1024 seek=320 status=progress
+
 
 
 echo "XONG! Rút thẻ SD và máy sẽ tự tắt sau 5s."
