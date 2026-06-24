@@ -15,13 +15,13 @@
 echo "============================================="
 echo "BƯỚC 1: CẤU HÌNH KHO PORTS VÀ BÙ ĐẮP LỆNH BỊ LƯỢC BỎ..."
 echo "============================================="
-rm -f /etc/apt/sources.list.d/*
+# rm -f /etc/apt/sources.list.d/*
 # Ép cấu hình kho ports.ubuntu.com chuẩn xác
 # echo -e "deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" > /etc/apt/sources.list
 
-apt update
+# apt update
 # Cài bù các lệnh bị lược bỏ trong bản Noble Minimal
-apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
+# apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
 
 echo "============================================="
 echo "BƯỚC 2: NẠP PRELOADER GỐC EMMC 2019 (FIX LỖI LỆNH TẢI)..."
