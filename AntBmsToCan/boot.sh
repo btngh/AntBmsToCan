@@ -1,6 +1,6 @@
 # apt install wget
 # rm clone_emmc.sh
-# wget -O clone_emmc.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/AntBmsToCan/boot.sh?v=$(date +%s)
+# wget -O boot.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/AntBmsToCan/boot.sh?v=$(date +%s)
 # chmod +x boot.sh
 # ./boot.sh
 
