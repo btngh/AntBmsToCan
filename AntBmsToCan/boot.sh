@@ -21,7 +21,20 @@ echo "============================================="
 
 # apt update
 # Cài bù các lệnh bị lược bỏ trong bản Noble Minimal
-apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
+# apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
+
+
+# 1. Cài đặt công cụ can thiệp thanh ghi eMMC nếu chưa có
+# apt install -y mmc-utils
+
+# 2. Ép chip eMMC bật chế độ High-Speed Boot (Bus width 8-bit / x8)
+mmc buswidth set 2 /dev/mmcblk1
+
+# 3. Ép cấu hình phân vùng khởi động chính thức (Partition Config) trỏ vào boot0
+mmc bootpart enable 1 1 /dev/mmcblk1
+
+
+
 
 echo "============================================="
 echo "BƯỚC 2: NẠP PRELOADER GỐC EMMC 2019 (FIX LỖI LỆNH TẢI)..."
