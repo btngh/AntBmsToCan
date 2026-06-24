@@ -32,7 +32,7 @@ wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BP
 wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
 gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
-gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1024 seek=2 status=progress
+gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=2 status=progress
 rm -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img
 
 echo "============================================="
