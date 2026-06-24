@@ -33,7 +33,7 @@ wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-
 gunzip -c BPI-R2-EMMC-boot0-DDR1600-0k-0905.img.gz | dd of=/dev/mmcblk1boot0 bs=512 seek=0 conv=notrunc
 gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=512 seek=512 conv=notrunc
 
-
+sync
 echo "XONG! Rút thẻ SD và máy sẽ tự tắt sau 5s."
 sleep 5
 poweroff
