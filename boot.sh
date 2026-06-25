@@ -1,5 +1,5 @@
 # rm clone_emmc.sh
-# wget boot.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/boot.sh?v=$(date +%s) | bash
+# wget -O boot.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/boot.sh?v=$(date +%s) | bash
 # chmod +x boot.sh
 # ./boot.sh
 
