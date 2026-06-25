@@ -45,7 +45,7 @@ dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k conv=
 echo "============================================="
 echo "BƯỚC 3 & 4: ĐỒNG BỘ U-BOOT VÀ CLONE HỆ ĐIỀU HÀNH..."
 echo "============================================="
-dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=1k skip=320 seek=320 count=1024 conv=sync,notrunc
+#dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=1k skip=320 seek=320 count=1024 conv=sync,notrunc
 mmc bootpart enable 1 1 /dev/mmcblk1
 # Clone 7.3G dữ liệu
 dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
