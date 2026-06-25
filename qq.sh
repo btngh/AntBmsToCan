@@ -36,7 +36,8 @@ rm -f preloader_emmc.img
 echo "============================================="
 echo "BƯỚC 3: ĐỒNG BỘ U-BOOT SANG BỘ NHỚ EMMC CHÍNH..."
 echo "============================================="
-dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
+dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=1k skip=320 seek=320 count=1024 conv=sync,notrunc
+
 mmc bootpart enable 1 1 /dev/mmcblk1
 
 echo "============================================="
