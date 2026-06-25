@@ -10,7 +10,17 @@
 # SCRIPT TỔNG LỰC: CLONE SD -> EMMC (BANANA PI R2) - BẢN FIX DỨT ĐIỂM
 # Tác giả: Anh Nam & AI Assistant
 # =========================================================================
+# 1. Đặt múi giờ chuẩn Việt Nam (GMT+7)
+timedatectl set-timezone Asia/Ho_Chi_Minh
 
+# 2. Bật tính năng tự động đồng bộ giờ với máy chủ Internet (NTP)
+timedatectl set-ntp true
+
+# 3. Khởi động lại dịch vụ thời gian để ép quét mạng tìm giờ mới
+systemctl restart systemd-timesyncd
+
+# 4. Kiểm tra lại trạng thái đồng bộ
+timedatectl status
 echo "============================================="
 echo "BƯỚC 1: CẤU HÌNH KHO PORTS VÀ BÙ ĐẮP LỆNH BỊ LƯỢC BỎ..."
 echo "============================================="
