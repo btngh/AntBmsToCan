@@ -4,6 +4,20 @@
 # chmod +x clone_w.sh
 # ./clone_w.sh
 #
+
+
+
+# 1. Đặt múi giờ chuẩn Việt Nam (GMT+7)
+timedatectl set-timezone Asia/Ho_Chi_Minh
+
+# 2. Bật tính năng tự động đồng bộ giờ với máy chủ Internet (NTP)
+timedatectl set-ntp true
+
+# 3. Khởi động lại dịch vụ thời gian để ép quét mạng tìm giờ mới
+systemctl restart systemd-timesyncd
+
+# 4. Kiểm tra lại trạng thái đồng bộ
+timedatectl status
 # 1. Cài bộ công cụ phần cứng, đĩa thô và nén file
 # apt install -y binutils mmc-utils pv parted fdisk xxd wget curl net-tools iproute2 wireless-tools bridge-utils
 
@@ -37,6 +51,7 @@ echo "============================================="
 echo 0 > /sys/block/mmcblk1boot0/force_ro
 
 # Tải file mồi nguồn chứa chữ ký số eMMC chuẩn xác từ kho hãng SINOVOIP
+wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 
