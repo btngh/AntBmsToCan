@@ -22,7 +22,15 @@ echo "============================================="
 # apt update
 # Cài bù các lệnh bị lược bỏ trong bản Noble Minimal
 # apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
+#!/bin/bash
+set -e
 
+# --- CẤU HÌNH TÁCH BỘT MỒI VÀ DỮ LIỆU ---
+# 1. Nạp Preloader (vùng boot0)
+echo 0 > /sys/block/mmcblk1boot0/force_ro
+wget -qO- [Link_BPI-R2-EMMC-boot0...] | dd of=/dev/mmcblk1boot0 bs=1k seek=0 conv=notrunc
+mmc bootpart enable 1 1 /dev/mmcblk1
+echo 1 > /sys/block/mmcblk1boot0/force_ro
 echo "============================================="
 echo "BƯỚC 2: NẠP PRELOADER GỐC EMMC 2019 (FIX LỖI LỆNH TẢI)..."
 echo "============================================="
@@ -31,13 +39,15 @@ echo 0 > /sys/block/mmcblk1boot0/force_ro
 wget https://raw.githubusercontent.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-0k-0905.img.gz
 wget https://raw.githubusercontent.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
 gunzip -c BPI-R2-EMMC-boot0-DDR1600-0k-0905.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=0 conv=notrunc
-gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=320 conv=notrunc
+
 
 mmc bootpart enable 1 1 /dev/mmcblk1
-# Clone 7.3G dữ liệu
-dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
-dd if=/dev/mmcblk0 bs=4M count=1825 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
-
+echo 1 > /sys/block/mmcblk1boot0/force_ro
+# 2. Ghi hệ điều hành (ổ đĩa chính)
+dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=4M conv=fsync # Sử dụng 1 lệnh duy nhất
+partprobe /dev/mmcblk1
+gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1 bs=1k seek=320 conv=notrunc
+sync
 echo "============================================="
 echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK BITMAP..."
 echo "============================================="
@@ -54,13 +64,6 @@ mount /dev/mmcblk1p2 /mnt/emmc_rootfs
 echo "root=/dev/mmcblk1p2 rootwait" > /mnt/emmc_boot/bananapi/bpi-r2/linux/uEnv.txt
 echo -e "/dev/mmcblk1p1 /boot vfat errors=remount-ro 0 1\n/dev/mmcblk1p2 / ext4 defaults 0 0" > /mnt/emmc_rootfs/etc/fstab
 
-# Chặn driver đồ họa và các dịch vụ gây treo máy 90s
-#echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
-#ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
-#ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
-#rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
-#rm -rf /mnt/emmc_rootfs/var/log/journal/*
-#echo "kernel.printk = 3 4 1 3" >> /mnt/emmc_rootfs/etc/sysctl.conf
 
 echo "============================================="
 echo "BƯỚC 7: HOÀN TẤT VÀ TỰ HỦY SCRIPT TRÊN THẺ SD..."
