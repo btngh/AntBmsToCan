@@ -39,7 +39,7 @@ rm -f /etc/apt/sources.list.d/*
 
 # Nạp kho phần mềm chuẩn PORTS dành riêng cho chip ARM
 
-echo -e "deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" > /etc/apt/sources.list
+#echo -e "deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" > /etc/apt/sources.list
 
 apt update
 apt install -y binutils mmc-utils pv wget
@@ -72,8 +72,8 @@ echo "============================================="
 echo "BƯỚC 4: CLONE TOÀN BỘ DỮ LIỆU HỆ ĐIỀU HÀNH SANG EMMC..."
 echo "============================================="
 # Thực hiện sao chép thô và hiển thị thanh tiến trình dung lượng trực quan
-dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
-
+#dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
+dd if=rootfs.img of=/dev/mmcblk1 bs=512 seek=2560 conv=notrunc
 echo "============================================="
 echo "BƯỚC 5: QUÉT VÀ SỬA TOÀN BỘ LỖI CHỈ MỤC TỆP TIN (BLOCK BITMAP)..."
 echo "============================================="
@@ -105,12 +105,7 @@ EOF
 # 6.3. Chặn driver đồ họa lỗi "lima" gây sụt áp bus điện eMMC khi khởi động độc lập
 echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
 
-# 6.4. Dùng lệnh mask khóa chết vĩnh viễn chuỗi 5 dịch vụ bẫy gây đóng băng máy 90 giây
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journal-flush.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-networkd-wait-online.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/fstrim.service
+
 
 # Xóa hoàn toàn file dịch vụ Flush và dọn dẹp tàn dư log tồi cũ
 rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
