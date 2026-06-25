@@ -1,8 +1,8 @@
 
 # rm clone_emmc.sh
-# wget -O clone_emmcw.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_w.sh?v=$(date +%s)
-# chmod +x clone_emmcw.sh
-# ./clone_emmc.sh
+# wget -O clone_w.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_w.sh?v=$(date +%s)
+# chmod +x clone_w.sh
+# ./clone_w.sh
 #
 # 1. Cài bộ công cụ phần cứng, đĩa thô và nén file
 # apt install -y binutils mmc-utils pv parted fdisk xxd wget curl net-tools iproute2 wireless-tools bridge-utils
