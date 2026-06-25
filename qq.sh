@@ -1,6 +1,6 @@
 
 # rm clone_emmc.sh
-# wget -O qq.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/qq.sh?v=$(date +%s) | bash
+# wget qq.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/qq.sh?v=$(date +%s)
 # chmod +x qq.sh
 # ./qq.sh
 
@@ -40,6 +40,28 @@ fi
 
 echo "Gỡ bỏ các phân vùng eMMC đang bị chiếm dụng..."
 umount ${DST}p* 2>/dev/null || true
+echo "NẠP boot0 GỐC EMMC 2019 (FIX LỖI LỆNH TẢI)..."
+echo "============================================="
+echo 0 > /sys/block/mmcblk1boot0/force_ro
+# Đã thêm lệnh wget và dùng link Raw chuẩn
+wget -O boot0.img.gz https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20191024-0k.img.gz?v=$(date +%s)
+dd if=/dev/zero of=/dev/mmcblk1boot0 bs=1k count=1024 conv=notrunc
+gunzip -c boot0.img.gz  | dd of=/dev/mmcblk1boot0 bs=1024 seek=0
+echo 1 > /sys/block/mmcblk1boot0/force_ro
+
+
+
+wget -O uboot.img.gz https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz?v=$(date +%s)
+gunzip -c uboot.img.gz | dd of=/dev/mmcblk1 bs=512 seek=640 conv=notrunc
+sudo mmc bootpart enable 1 1 /dev/mmcblk1
+
+sync
+
+
+
+
+
+
 
 echo "============================================="
 echo " BƯỚC 2: SAO CHÉP CẤU TRÚC BẢNG PHÂN VÙNG (SFDISK)..."
@@ -60,8 +82,8 @@ echo "============================================="
 echo " BƯỚC 4: VÁ U-BOOT VÀO VÁCH CHUẨN FRANK-W..."
 echo "============================================="
 # Nạp U-Boot từ file ảnh gốc (hoặc từ thẻ SD) vào đúng vách seek=2 theo tài liệu
-dd if=$SRC of=$DST bs=1k seek=2 count=1022 conv=notrunc
-sync
+#dd if=$SRC of=$DST bs=1k seek=2 count=1022 conv=notrunc
+#sync
 
 echo "============================================="
 echo " BƯỚC 5: GẮN KẾT ĐĨA MỒI ĐỂ CHUẨN BỊ SAO CHÉP FILE..."
