@@ -29,6 +29,33 @@ systemctl restart systemd-timesyncd || true
 apt-get update
 apt-get install -y binutils mmc-utils pv parted fdisk xxd dosfstools rsync
 
+# --- ĐOẠN TÍCH HỢP CẤU HÌNH BOOT CHO EMMC ---
+echo "Check and config eMMC boot partition..."
+
+# 1. Cài đặt mmc-utils nếu chưa có (cần internet)
+if ! command -v mmc &> /dev/null; then
+    apt-get update && apt-get install -y mmc-utils
+fi
+
+# 2. Xác định đúng tên chip eMMC (trên BPI-R2 thường là mmcblk1 hoặc mmcblk0)
+EMMC_DEV="/dev/mmcblk1" # Thay đổi thành mmcblk0 nếu cần
+
+if [ -b "$EMMC_DEV" ]; then
+    # Mở khóa bảo vệ phân vùng boot0
+    echo 0 > /sys/block/${EMMC_DEV##*/}/force_ro
+    
+    # Thực hiện lệnh pconf 48 (tương đương bootpart enable 1 1)
+    # Lệnh này báo cho CPU biết: Boot từ phân vùng Boot0
+    mmc bootpart enable 1 1 $EMMC_DEV
+    
+    # Khóa lại để an toàn
+    echo 1 > /sys/block/${EMMC_DEV##*/}/force_ro
+    echo "Done! pconf 48 has been set via mmc-utils."
+else
+    echo "Error: eMMC device not found at $EMMC_DEV"
+fi
+
+
 SRC="/dev/mmcblk0"
 DST="/dev/mmcblk1"
 BOOT0="/dev/mmcblk1boot0"
