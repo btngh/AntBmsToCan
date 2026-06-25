@@ -23,7 +23,7 @@ systemctl restart systemd-timesyncd
 timedatectl status
 
 echo -e "deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" > /etc/apt/sources.list
-
+apt install -y binutils mmc-utils pv wget
 echo "============================================="
 echo "BƯỚC 2: TẢI VÀ NẠP PRELOADER GỐC EMMC 2019..."
 echo "============================================="
