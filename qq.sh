@@ -21,6 +21,9 @@ systemctl restart systemd-timesyncd
 
 # 4. Kiểm tra lại trạng thái đồng bộ
 timedatectl status
+
+echo -e "deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" > /etc/apt/sources.list
+
 echo "============================================="
 echo "BƯỚC 2: TẢI VÀ NẠP PRELOADER GỐC EMMC 2019..."
 echo "============================================="
