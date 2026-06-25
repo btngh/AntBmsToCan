@@ -38,9 +38,9 @@ echo 1 > /sys/block/mmcblk1boot0/force_ro
 
 
 
-#wget -O uboot.img.gz https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz?v=$(date +%s)
-#gunzip -c uboot.img.gz | dd of=/dev/mmcblk1 bs=1k seek=2 count=1022
-#sudo mmc bootpart enable 1 1 /dev/mmcblk1
+wget -O uboot.img.gz https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz?v=$(date +%s)
+gunzip -c uboot.img.gz | dd of=/dev/mmcblk1 bs=1k seek=2 count=1022
+sudo mmc bootpart enable 1 1 /dev/mmcblk1
 
 sync
 # Lệnh tự xóa chính nó trên thẻ SD
