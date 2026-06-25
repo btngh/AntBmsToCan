@@ -1,5 +1,5 @@
 # rm clone_emmc.sh
-# wget -O qq.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/clone_emmc.sh?v=$(date +%s) | bash
+# wget -O qq.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/qq.sh?v=$(date +%s) | bash
 # chmod +x qq.sh
 # ./qq.sh
 
@@ -28,9 +28,9 @@ rm -f /etc/apt/sources.list.d/*
 # Ép cấu hình kho ports.ubuntu.com chuẩn xác
 # echo -e "deb http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse\ndeb http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" > /etc/apt/sources.list
 
-apt update
+#apt update
 # Cài bù các lệnh bị lược bỏ trong bản Noble Minimal
-apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
+#apt install -y binutils mmc-utils pv wget parted fdisk xxd net-tools build-essential gcc make cmake git python3 python3-pip
 
 echo "============================================="
 echo "BƯỚC 2: NẠP PRELOADER GỐC EMMC 2019 (FIX LỖI LỆNH TẢI)..."
@@ -40,7 +40,7 @@ echo 0 > /sys/block/mmcblk1boot0/force_ro
 wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
-rm -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img
+# rm -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img
 
 echo "============================================="
 echo "BƯỚC 3 & 4: ĐỒNG BỘ U-BOOT VÀ CLONE HỆ ĐIỀU HÀNH..."
