@@ -28,7 +28,7 @@ echo "============================================="
 echo "BƯỚC 2: TẢI VÀ NẠP PRELOADER GỐC EMMC 2019..."
 echo "============================================="
 echo 0 > /sys/block/mmcblk1boot0/force_ro
-wget -O preloader_emmc.img.gz https://github.com
+wget -O preloader_emmc.img.gz https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 gunzip -f preloader_emmc.img.gz
 dd if=preloader_emmc.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
 rm -f preloader_emmc.img
