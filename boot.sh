@@ -1,5 +1,5 @@
 # rm clone_emmc.sh
-# wget --no-check-certificate -O boot.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/boot.sh?v=$(date +%s) | bash
+# wget boot.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/boot.sh?v=$(date +%s) | bash
 # chmod +x boot.sh
 # ./boot.sh
 
@@ -16,12 +16,12 @@ echo "NẠP PRELOADER GỐC EMMC 2019 (FIX LỖI LỆNH TẢI)..."
 echo "============================================="
 echo 0 > /sys/block/mmcblk1boot0/force_ro
 # Đã thêm lệnh wget và dùng link Raw chuẩn
-wget -O https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20191024-0k.img.gz
+wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20191024-0k.img.gz
 dd if=/dev/zero of=/dev/mmcblk1boot0 bs=1k count=1024 conv=notrunc
 gunzip -c BPI-R2-EMMC-boot0-DDR1600-20191024-0k.img.gz  | dd of=/dev/mmcblk1boot0 bs=1024 seek=0
 echo 1 > /sys/block/mmcblk1boot0/force_ro
 
-wget -O https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
+wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
 gunzip -c /u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1 bs=512 seek=640 conv=notrunc
 sudo mmc bootpart enable 1 1 /dev/mmcblk1
 
