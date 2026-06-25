@@ -44,7 +44,9 @@ mmc bootpart enable 1 1 /dev/mmcblk1
 echo "============================================="
 echo "BƯỚC 4: CLONE TOÀN BỘ HỆ ĐIỀU HÀNH SANG EMMC (MẤT VÀI PHÚT)..."
 echo "============================================="
-dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
+# dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
+# Phép toán: 1825 khối x 4MB = Đúng 7300MB (7.3GB) rồi tự ngắt
+dd if=/dev/mmcblk0 bs=4M count=1825 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync && sync
 
 echo "============================================="
 echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK VÀ CHỈ MỤC TỆP TIN..."
