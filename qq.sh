@@ -80,7 +80,7 @@ gunzip -c boot0.img.gz  | dd of=/dev/mmcblk1boot0 bs=1024 seek=0
 
 wget -O uboot.img.gz https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz?v=$(date+%s)
 gunzip -c uboot.img.gz | dd of=/dev/mmcblk1boot0 bs=1k seek=320 conv=notrunc
-#sudo mmc bootpart enable 1 1 /dev/mmcblk1boot0
+#sudo mmc bootpart enable 1 1 /dev/mmcblk1
 echo 1 > /sys/block/mmcblk1boot0/force_ro
 sync
 
