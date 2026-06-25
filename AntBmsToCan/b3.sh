@@ -69,7 +69,6 @@ echo "============================================="
 echo "BƯỚC 7: HOÀN TẤT VÀ TỰ HỦY SCRIPT TRÊN THẺ SD..."
 echo "============================================="
 umount /mnt/emmc_boot /mnt/emmc_rootfs
-sync
 # Lệnh tự xóa chính nó trên thẻ SD
 rm -f "$0"
 echo "XONG! Rút thẻ SD và máy sẽ tự tắt sau 5s."
