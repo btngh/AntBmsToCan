@@ -32,7 +32,7 @@ wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BP
 wget https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
 gunzip -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz
 dd if=BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img of=/dev/mmcblk1boot0 bs=1k conv=sync,notrunc
-gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1 bs=1024 seek=2 status=progress
+
 rm -f BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img
 
 echo "============================================="
@@ -43,7 +43,7 @@ mmc bootpart enable 1 1 /dev/mmcblk1
 # Clone 7.3G dữ liệu
 #dd if=/dev/mmcblk0 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
 dd if=/dev/mmcblk0 bs=4M count=1825 | pv -s 7300M | dd of=/dev/mmcblk1 bs=4M conv=fsync
-
+gunzip -c u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1 bs=1024 seek=2 conv=sync,notruncs
 echo "============================================="
 echo "BƯỚC 5: SỬA LỖI ĐỊNH DẠNG BLOCK BITMAP..."
 echo "============================================="
