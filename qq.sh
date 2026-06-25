@@ -1,5 +1,5 @@
 # rm clone_emmc.sh
-# wget -O qq.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/qq.sh?v=$(date +%s) | bash
+# wget --no-check-certificate -O- qq.sh https://github.com/btngh/AntBmsToCan/raw/refs/heads/master/qq.sh?v=$(date +%s) | bash
 # chmod +x qq.sh
 # ./qq.sh
 
