@@ -75,16 +75,6 @@ cat <<EOF > /mnt/emmc_rootfs/etc/fstab
 EOF
 
 # Chặn driver đồ họa gây sụt áp eMMC
-echo "blacklist lima" > /mnt/emmc_rootfs/etc/modprobe.d/blacklist.conf
-
-# Khóa chết các dịch vụ bẫy gây treo máy 90 giây
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-journald.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/systemd-networkd-wait-online.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/NetworkManager-wait-online.service
-ln -sf /dev/null /mnt/emmc_rootfs/etc/systemd/system/fstrim.service
-rm -f /mnt/emmc_rootfs/lib/systemd/system/systemd-journal-flush.service
-rm -rf /mnt/emmc_rootfs/var/log/journal/*
-rm -rf /mnt/emmc_rootfs/var/lib/systemd/timers/*
 
 # Chặn vĩnh viễn các dòng log tràn màn hình
 echo "kernel.printk = 3 4 1 3" >> /mnt/emmc_rootfs/etc/sysctl.conf
