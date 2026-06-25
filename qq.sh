@@ -37,7 +37,8 @@ echo "============================================="
 echo "BƯỚC 3: ĐỒNG BỘ U-BOOT SANG BỘ NHỚ EMMC CHÍNH..."
 echo "============================================="
 
-dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=1K skip=320 seek=320 count=1024 conv=notrunc && sync
+# dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=1K skip=320 seek=320 count=1024 conv=notrunc && sync
+dd if=/dev/mmcblk0 of=/dev/mmcblk1 bs=512 skip=640 seek=640 count=2048 conv=notrunc && sync
 
 mmc bootpart enable 1 1 /dev/mmcblk1
 
