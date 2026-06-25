@@ -19,12 +19,11 @@ echo 0 > /sys/block/mmcblk1boot0/force_ro
 wget --no-check-certificate -O https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz 
 dd if=/dev/zero of=/dev/mmcblk1boot0 bs=1k count=1024 conv=notrunc
 gunzip -c BPI-R2-EMMC-boot0-DDR1600-20190722-0k.img.gz  | dd of=/dev/mmcblk1boot0 bs=1024 seek=0
-
-sudo mmc bootpart enable 1 1 /dev/mmcblk1
 echo 1 > /sys/block/mmcblk1boot0/force_ro
+
 wget --no-check-certificate -O https://github.com/BPI-SINOVOIP/BPI-files/raw/refs/heads/master/SD/100MB/u-boot-2019.07-bpi-r2-2k.img.gz
 gunzip -c /u-boot-2019.07-bpi-r2-2k.img.gz | dd of=/dev/mmcblk1 bs=512 seek=640 conv=notrunc
-
+sudo mmc bootpart enable 1 1 /dev/mmcblk1
 
 sync
 # Lệnh tự xóa chính nó trên thẻ SD
